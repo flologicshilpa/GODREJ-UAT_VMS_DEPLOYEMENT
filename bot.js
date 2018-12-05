@@ -76,8 +76,17 @@ bot.dialog('GreetingDialog',[
         intent = args.intent;
 
         session.conversationData[GlobalADID]=id;        
-        session.conversationData[GloabalIntent] = intent.intent;       
-        session.send('Hello %s! Welcome to Vendor Bot.',name);
+        session.conversationData[GloabalIntent] = intent.intent;      
+        var msg;
+        if (curHr < 12) {
+             msg="Good morning.";
+            } else if (curHr < 18) {
+                msg="Good afternoon.";
+            } else {
+            msg="Good evening.";
+            }
+        
+        session.send('Hello %s! %s Welcome to Vendor Bot.',name,msg);
 
    var card = {  
        
