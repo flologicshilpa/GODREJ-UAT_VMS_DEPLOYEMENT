@@ -43,21 +43,21 @@ var userquestion="userquestion";
 var conversationid="conversationid";
 
 
-var inMemoryStorage = new builder.MemoryBotStorage();
+//var inMemoryStorage = new builder.MemoryBotStorage();
 
 //for cosmos db
 
 
-//  var documentDbOptions = {
-//      host: 'https://gplflologiccosmosdbuat.documents.azure.com:443/', 
-//      masterKey: 'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==', 
-//     database: 'botdocs',   
-//     collection: 'botdata'
-//  };
+ var documentDbOptions = {
+     host: 'https://gplflologiccosmosdbuat.documents.azure.com:443/', 
+     masterKey: 'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==', 
+    database: 'botdocs',   
+    collection: 'botdata'
+ };
 
-// var docDbClient = new azure.DocumentDbClient(documentDbOptions);
+var docDbClient = new azure.DocumentDbClient(documentDbOptions);
 
-// var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
+var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
 
 
@@ -66,7 +66,7 @@ var inMemoryStorage = new builder.MemoryBotStorage();
 //universal bot connection
 const  bot = module.exports =  new builder.UniversalBot(connector, function (session, args) {  
     
- }).set('storage', inMemoryStorage); 
+ }).set('storage', cosmosStorage); 
 
 
 //LUIS Connection
@@ -136,8 +136,7 @@ bot.dialog('GreetingDialog',[
                 "type": "TextBlock",
                 "text": " _**“Vendor details for Kshetra”**_ "+
                 "\r _**“My pending request”**_ " +
-                "\n _**“My requests”**_ " +
-                "\n _**“Request details for jdoe@godrehproperties.com”**_ " +
+                "\n _**“My requests”**_ " +              
                 "\n _**“Service details”**_ " +
                 "\n _**“Service details for 3001655”**_ " +
                 "\n _**“Material detail”**_ " +
