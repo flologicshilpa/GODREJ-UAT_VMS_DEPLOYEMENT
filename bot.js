@@ -1,6 +1,19 @@
 'use strict';
 const builder = require('botbuilder');
 
+
+//qna maker
+//var QnAClient = require('../lib/client');
+var QnAClient = require('./lib/client');
+
+var qnaClient = new QnAClient({
+    knowledgeBaseId: process.env.KB_ID,
+    subscriptionKey: process.env.QNA_KEY,
+    scoreThreshold: 0.2 // OPTIONAL: Default value is 0.2
+});
+
+
+
 //for cosmos db
 var azure = require('botbuilder-azure');
 
@@ -12,7 +25,7 @@ const connector = new builder.ChatConnector({
 var Request = require("request");
 
 //common variable
-var i,intent="",entity;
+var i,intent="",entity,gstentity,panentity;
 var auth;
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
@@ -25,16 +38,14 @@ var GlobalMaterialName="GlobalMaterialName";
 var GlobalServiceCode="GlobalServiceCode";
 var GlobalServiceName="GlobalServiceName";
 var GlobalADID="GlobalADID";
+var GlobalPanGSTCode="GlobalPanGSTCode";
+var userquestion="userquestion";
+var conversationid="conversationid";
 
-//var inMemoryStorage = new builder.MemoryBotStorage();
 
+var inMemoryStorage = new builder.MemoryBotStorage();
 
-var documentDbOptions = {
-    host:'https://gplflologiccosmosdbuat.documents.azure.com:443/', //'https://vms-godrej-nodejs.documents.azure.com:443/',    //'', 
-    masterKey:'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==',//'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==', 
-    database:'botdocs',   
-    collection:'botdata'
-};
+//for cosmos db
 
 
 //  var documentDbOptions = {
@@ -44,9 +55,9 @@ var documentDbOptions = {
 //     collection: 'botdata'
 //  };
 
-var docDbClient = new azure.DocumentDbClient(documentDbOptions);
+// var docDbClient = new azure.DocumentDbClient(documentDbOptions);
 
-var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
+// var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
 
 
@@ -54,8 +65,8 @@ var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
 //universal bot connection
 const  bot = module.exports =  new builder.UniversalBot(connector, function (session, args) {  
-    // session.send("welcome");    
- }).set('storage', cosmosStorage); 
+    
+ }).set('storage', inMemoryStorage); 
 
 
 //LUIS Connection
@@ -64,6 +75,22 @@ const LuisModelUrl1 = process.env.LuisModelUrl || process.env.baseUrl; //'https:
 // Create a recognizer that gets intents from LUIS, and add it to the bot
 var recognizer = new builder.LuisRecognizer(LuisModelUrl1);
 bot.recognizer(recognizer);
+
+
+
+
+
+bot.on("event", function (event) {
+    var msg = new builder.Message().address(event.address);
+    if (event.name === "customEvent") {
+        // HOW CAN I STORE event.value IN session.userData ? 
+      //  console.log(event.value);
+        session.send("%s",event.value)
+    }
+});
+
+
+//for small talk
 
 
 //greeting dialog
@@ -75,11 +102,22 @@ bot.dialog('GreetingDialog',[
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
         intent = args.intent;
 
+
+        var myDate = new Date();
+        var hrs = myDate.getHours();
+    
+        var greet;
+    
+        if (hrs < 12)
+            greet = 'Good Morning';
+        else if (hrs >= 12 && hrs <= 17)
+            greet = 'Good Afternoon';
+        else if (hrs >= 17 && hrs <= 24)
+            greet = 'Good Evening';
+
         session.conversationData[GlobalADID]=id;        
-        session.conversationData[GloabalIntent] = intent.intent;      
-       
-        
-        session.send('Hello %s! Welcome to Vendor Bot.',name);
+        session.conversationData[GloabalIntent] = intent.intent;       
+        session.send('%s  %s! Welcome to Vendor Bot.',greet,name);
 
    var card = {  
        
@@ -88,7 +126,6 @@ bot.dialog('GreetingDialog',[
         "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
         "type": "AdaptiveCard",
         "version": "1.0",
-
             "body": [
             {
                 "type": "TextBlock",
@@ -111,17 +148,14 @@ bot.dialog('GreetingDialog',[
                 "\n _**“all document for kshetra”**_ "              
 
             },
-            
         ]
     }
     }
-                var msg = new builder.Message()
-                .addAttachment(card)
-                session.send(msg);
+        var msg = new builder.Message()
+        .addAttachment(card)
+        session.send(msg);
 
-
-
-        session.send('What information would you like?');    
+        session.send('How may I help you?');    
        // session.send("%s",username1)    
         session.endDialog();
     }
@@ -201,10 +235,18 @@ bot.dialog('NoneDialog',[
 ]).triggerAction({
     matches: 'None'
 })
+
+var salesData={};
+var str1 = "";
+var str2 = "";
+var str3="";
 //Vendor all details Dialog
 bot.dialog('AllDetailsDialog',[
     function (session, args, next) {
        
+        session.conversationData[conversationid]=session.conversationData.id;
+        session.conversationData[userquestion]=session.message.text;
+
        //name not present in query
         if(args.Entity==true)
         {                
@@ -224,61 +266,165 @@ bot.dialog('AllDetailsDialog',[
              {
                 session.conversationData[Gloabalentity]="";
                 session.conversationData[GlobalVendorName]="";
+                session.conversationData[GlobalPanGSTCode]="";
              }
         }                 
         if(session.conversationData[Gloabalentity])
         {
-            var abc;
-            var dict = [];
-            process.env.global_vendor_name_apiurl  = process.env.ApiURLForVendorName + session.conversationData[GlobalVendorName];
-            Request.get({ url :  process.env.global_vendor_name_apiurl ,headers : { "Authorization" : auth}}, (error, response, body) => {
-                if(error) {
-                   session.send("Geting error");
-                }
-                else{
-                    
-                    abc=JSON.parse(body);
-                    //for single record
-                    if(abc.length == 1)
-                    {
-                    session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
-                    var cards=getCardsAttachmentsForVendorName(session,abc);
-                    var msg = new builder.Message(session)
-                    .addAttachment(cards);
-                    session.send(msg);             
-                    session.endDialog();
-                    }
-                    //for more than one record found
-                    else if(abc.length > 1) 
-                    {                        
-                        for (i = 0; i < abc.length; i++) 
-                        {
-                            if(i <= 4)
-                            {
-                               dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")")
-                            }
+            panentity = builder.EntityRecognizer.findEntity(intent.entities,'pan-code');
+            gstentity = builder.EntityRecognizer.findEntity(intent.entities,'gstn_code');
+            if(panentity)
+            {
+                session.conversationData[GlobalPanGSTCode]=panentity.entity;
+        
+            }
+            if(gstentity)
+            {
+                session.conversationData[GlobalPanGSTCode]=gstentity.entity;
+            }
 
-                            //choices = dic
-                        }
-                        if(abc.length > 4)
+            if(session.conversationData[GlobalPanGSTCode])
+            {
+                var abc;
+                var dict = [];
+                process.env.global_vendordetailsfor_gstpan  = process.env.ApiForVendorDetailsForPanandGst + session.conversationData[GlobalPanGSTCode];
+                Request.get({ url :  process.env.global_vendordetailsfor_gstpan ,headers : { "Authorization" : auth}}, (error, response, body) => {
+                    if(error) {
+                    session.send("Geting error");
+                    }
+                    else{
+                        
+                        abc=JSON.parse(body);
+                        //for single record
+                        if(abc.length >= 1)
                         {
-                            session.send("More than 5 rows return please narrow your search.If name not found please narrow your search or resubmit the query");
-                            builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
+                        session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
+                        var cards = getCardsAttachmentsForVendorName(session,abc);
+                        var msg = new builder.Message(session)
+                        .addAttachment(cards);
+                        session.send(msg);   
+                        session.conversationData[GlobalPanGSTCode]="";          
+                        session.endDialog();
                         }
-                       else{
-                        builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
-                       }
-                    } 
-                    //no record found  
-                    else
-                    {
-                            session.send("No data found for vendor : %s",session.conversationData[GlobalVendorName]);
-                    }            
-                   }                            
-            });      
+                        else{
+                            session.send("data not found");
+                            session.conversationData[GlobalPanGSTCode]="";
+                        }
+                    }
+                });
+            }
+            else{
+                var abc;
+                var dict = [];
+
+               // var dict = {};
+                               
+
+              var choices = {};
+                process.env.global_vendor_name_apiurl  = process.env.ApiURLForVendorName + session.conversationData[GlobalVendorName];
+                Request.get({ url :  process.env.global_vendor_name_apiurl ,headers : { "Authorization" : auth}}, (error, response, body) => {
+                    if(error) {
+                    session.send("Geting error");
+                    }
+                    else{
+                        
+                        abc=JSON.parse(body);
+                        //for single record
+                        if(abc.length == 1)
+                        {
+                        session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
+                        var cards=getCardsAttachmentsForVendorName(session,abc);
+                        var msg = new builder.Message(session)
+                        .addAttachment(cards);
+                        session.send(msg);             
+                        session.endDialog();
+                        }
+                        //for more than one record found
+                        else if(abc.length > 1) 
+                        {  
+                           
+                            // str1 = abc[0].VENDOR_NAME;
+                            // str2 = abc[1].VENDOR_NAME;
+                            // str3 = abc[2].VENDOR_NAME;
+
+                            // var employees = {
+                            //     accounting: []
+                            // };
+                            
+                            // for(var i in abc) {    
+                            
+                            //     var item = abc[i];   
+                            
+                            //     str1=item.VENDOR_NAME;
+                            //     employees.accounting.push({ 
+                            //         str1  : item.REQUEST_NO                                    
+                            //     });
+                            // }
+                            
+
+
+                            for (i = 0; i < abc.length; i++) 
+                            {
+                                if(i <= 4)
+                                {
+                                   dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")");
+                                    
+                                    
+                                }
+
+                                //choices = dic
+                            }
+                           //  var test=JSON.stringify(choices);
+
+                            //  var namearray=[];
+                            //  namearray.push("vendorname"= abc[0].VENDOR_NAME);
+
+                            //  var employees = {
+                            //     namearray: []
+                            //     };
+
+                            //     employees.namearra.push({ 
+                            //         requestno:abc[0].REQUEST_NO                                    
+                            //             });
+
+                           //  salesData.push(str1:{ requestno:abc[0].REQUEST_NO })
+
+
+                            // session.send("%s",str1.ty);
+                            // salesData = {
+                            //  "str1": {
+                            //         requestno:abc[0].REQUEST_NO                              
+                            //     },
+                            //     str2: {
+                            //         requestno:abc[1].REQUEST_NO                              
+                            //     },
+                            //     str3: {
+                            //         requestno:abc[2].REQUEST_NO                              
+                            //     },
+                            // };
+                            
+                           // session.send("%s",JSON.stringify(dict));
+                            if(abc.length > 4)
+                            {
+                                session.send("More than 5 rows return please narrow your search.If name not found please narrow your search or resubmit the query");
+                                builder.Prompts.choice(session, "Select Name",dict,{listStyle:3});
+                            }
+                            else
+                            {
+                                    builder.Prompts.choice(session, "Select Name: ",dict,{listStyle:3});
+                            }
+                        } 
+                        //no record found  
+                        else
+                        {
+                                session.send("No data found for vendor : %s",session.conversationData[GlobalVendorName]);
+                        }            
+                    }                            
+                });   
+            }   
         }
-       else
-       {
+        else
+        {
            //request no mantain in session
            if(session.conversationData[GlobalRequestNo]) 
            {
@@ -307,22 +453,36 @@ bot.dialog('AllDetailsDialog',[
            //request no not maintain in session
            else 
            {
-            session.conversationData[GloabalIntent]="Vendor.AllDetails";               
-            session.beginDialog('askForVendorName');             
-          //  session.endDialog(); 
+            //session.conversationData[GloabalIntent]="Vendor.AllDetails";               
+            //session.beginDialog('askForVendorName');  
+            var msgfornodata = new builder.Message();    
+            msgfornodata.text("It looks like you are looking for “Vendor details” but you didn't mention _vendor name, gst or pan_.\n You may ask things like “vendor details for _ABC Ltd_” or “vendor details for _ABCPX0000G_” ");        
+            session.send(msgfornodata);
+            session.endDialog(); 
            }
         
-       }  
+        }  
     },
     //Get Data for selected name
-      function (session, results) {          
-            var str = results.response.entity;
+      function (session, results) { 
+          
+      var str=results.response.entity;
+          //session.send("%s",JSON.stringify(results));    
+          
+        //   var region = salesData[results.response.entity];
+        //   session.send("%s",region.requestno); 
+
+
             if(results.response.entity)
             {
-           // var arr = new Array();
+            var arr = new Array();
+           // session.send("%s",);
+
+
             var arr = str.match(/\(([^)]+)\)/)[1];         
             var abc;
-            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;            
+            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;     
+
             Request.get({ url : process.env.global_reqno_apiurl,headers:{"Authorization" : auth}}, (error, response, body) => {
                 if(error) {
                    session.send("Geting error");
@@ -372,6 +532,34 @@ bot.dialog('GSTandPAN_NoDialog',[
                 {
                     session.conversationData[Gloabalentity1] ="PanNo";
                 }
+                // else if(builder.EntityRecognizer.findEntity(intent.entities,'CST_Certificate'))
+                // {
+                //     session.conversationData[Gloabalentity1] ="CST_Certificate";
+                // }
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'Cancelled_Cheque'))
+                {
+                    session.conversationData[Gloabalentity1] ="Cancelled_Cheque";
+                }
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'Channel_Partner_Agreement'))
+                {
+                    session.conversationData[Gloabalentity1] ="Channel_Partner_Agreement";
+                }              
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'EM_Certificate'))
+                {
+                    session.conversationData[Gloabalentity1] ="EM_Certificate";
+                }               
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'PF_Certificate'))
+                {
+                    session.conversationData[Gloabalentity1] ="PF_Certificate";
+                }
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'Proprietorship_Declaration'))
+                {
+                    session.conversationData[Gloabalentity1] ="Proprietorship_Declaration";
+                }
+                else if(builder.EntityRecognizer.findEntity(intent.entities,'RERA_Certificate'))
+                {
+                    session.conversationData[Gloabalentity1] ="RERA_Certificate";
+                }
                 else
                 {
                     session.conversationData[Gloabalentity1] ="none";
@@ -415,67 +603,39 @@ bot.dialog('GSTandPAN_NoDialog',[
                             session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
                             var data1=session.conversationData[GlobalRequestNo];
                             var enquryno=data1.replace('/', '_');
-                            var finaleqno=enquryno.replace('/','_');
-                            
-                            //get gst or pan attach document                                 
-
+                            var finaleqno=enquryno.replace('/','_');                           
+                           
                             if(session.conversationData[Gloabalentity1]=="GstNo")
                             {
-                                attachdoc = getattachdocument(session,abc);                               
-                                var exte = getextention(attachdoc);
-
-                                if(attachdoc)
-                                {
-                                var msg = session.message;                               
-                                 var attachment = msg.attachments[0];
-                                 
-                                    session.send({
-                                        text: "You sent:",
-                                        attachments: [
-                                            {
-                                                contentType: "application/" + exte,
-                                                contentUrl: attachdoc,                            
-                                                name: "click here to open file"
-                                            }
-                                        ]
-                                    });
-                                }
-                                else{
-                                    session.send("Gst Certificate Not attach");
-                                }
+                                
                                 session.send('Vendor Name : %s \n GST No : %s ',abc[0].VENDOR_NAME,abc[0].GST_NO +'<br>' );
-                                session.endDialog();  
+                                //session.endDialog();  
                             }
-                            else if(session.conversationData[Gloabalentity1]=="PanNo")
-                            {
-                                attachdoc = getattachdocument(session,abc);                              
-                                 var exte = getextention(attachdoc);
-                                 if(attachdoc)
-                                 {
-                                 var msg = session.message;                               
-                                  var attachment = msg.attachments[0];
-                                     session.send({
-                                         text: "You sent:",
-                                         attachments: [
-                                             {
-                                                 contentType: "application/" + exte,
-                                                 contentUrl: attachdoc,                            
-                                                 name: "click here to open file"
-                                             }
-                                         ]
-                                     });
-                                    }
-                                    else{
-                                        session.send("PAN card copy not attach");
-                                    }
+                            else(session.conversationData[Gloabalentity1]=="PanNo")
+                            {                                
                                 session.send('Vendor Name : %s \n Pan No : %s ',abc[0].VENDOR_NAME,abc[0].PAN_NO +'<br>' );
-                                session.endDialog(); 
+                               // session.endDialog(); 
                             }
-                            else
-                            {
-                                session.send('Please narrow your search');
-                                session.endDialog(); 
-                            }
+                           
+                             //get gst or pan attach document 
+                            
+                             attachdoc = getattachdocument(session,abc);                               
+                             var exte = getextention(attachdoc);
+                             if(attachdoc)
+                             {
+                             var msg = session.message;                               
+                              var attachment = msg.attachments[0];                                 
+                                 session.send({text: "Attach Document:",
+                                     attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"
+                                         }
+                                     ]
+                                 });
+                                 session.endDialog();
+                             }
+                             else{
+                                 session.send("Document not attach");
+                                 session.endDialog();
+                             }
                         }
                         else
                         {
@@ -527,53 +687,36 @@ bot.dialog('GSTandPAN_NoDialog',[
                  session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
                  if(session.conversationData[Gloabalentity1]=="GstNo")   
                  {
-                    attachdoc = getattachdocument(session,bodydata);                              
-                    var exte = getextention(attachdoc);
-                    if(attachdoc)
-                    {
-                    var msg = session.message;                               
-                     var attachment = msg.attachments[0];
-                        session.send({
-                            text: "Gst Certificate:",
-                            attachments: [
-                                {
-                                    contentType: "application/" + exte,
-                                    contentUrl: attachdoc,                            
-                                    name: "click here to open file"
-                                }
-                            ]
-                        });
-                    }
-                    else{
-                        session.send("Gst Certificate Not attach");
-                    }
                     session.send('Vendor Name : %s \n GST No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].GST_NO +'<br>' );
-                    session.endDialog(); 
+                    
                  } 
-                 else{
-                    attachdoc = getattachdocument(session,bodydata);                              
-                    var exte = getextention(attachdoc);
-                    if(attachdoc)
-                    {
-                    var msg = session.message;                               
-                     var attachment = msg.attachments[0];
-                        session.send({
-                            text: "Pan Card Copy:",
-                            attachments: [
-                                {
-                                    contentType: "application/" + exte,
-                                    contentUrl: attachdoc,                            
-                                    name: "click here to open file"
-                                }
-                            ]
-                        });
-                    }
-                    else{
-                        session.send("PAN card copy not attach");
-                    }
+                 else if(session.conversationData[Gloabalentity1]=="PanNo") 
+                 {                   
                     session.send('Vendor Name : %s \n PAN No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].PAN_NO +'<br>' );
-                    session.endDialog(); 
+                   
                  }
+
+                 //get gst or pan attach document 
+                            
+                 attachdoc = getattachdocument(session,bodydata);                               
+                 var exte = getextention(attachdoc);
+                 if(attachdoc)
+                 {
+                 var msg = session.message;                               
+                  var attachment = msg.attachments[0];                                 
+                     session.send({text: "Attach Document:",
+                         attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"
+                             }
+                         ]
+                     });
+                     session.endDialog(); 
+                 }
+                 else{
+                     session.send("Document not attach");
+                     session.endDialog(); 
+                 }
+
+
                 }
                 else{
                     session.send("Data not available for vendor : %s",session.conversationData[GlobalVendorName]);
@@ -585,8 +728,13 @@ bot.dialog('GSTandPAN_NoDialog',[
         }
         else 
         {
-            session.conversationData[GloabalIntent]="Vendor.Number";               
-            session.beginDialog('askForVendorName');  
+            //session.conversationData[GloabalIntent]="Vendor.Number";               
+           // session.beginDialog('askForVendorName'); 
+           var msgfornodata = new builder.Message();    
+            msgfornodata.text("It looks like you are looking for “pan no” or “gst no” but you didn't mention _vendor name.\n You may ask things like “pan no for _ABC Ltd_” or “gst no for _ABC Ltd_” ");        
+            session.send(msgfornodata);
+          // session.send("It looks like you are looking for vendor details but you didn't mention vendor name, gst or pan. You may ask things like vendor details for ABC Ltd or vendor details for ABCPX0000G");           
+           session.endDialog();  
         }      
     }
 },   
@@ -610,54 +758,41 @@ bot.dialog('GSTandPAN_NoDialog',[
                         {
                         session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
                                 if(session.conversationData[Gloabalentity1]=="GstNo")
-                                {
-                                    attachdoc = getattachdocument(session,bodydata);                              
-                                    var exte = getextention(attachdoc);
-                                    if(attachdoc)
-                                    {
-                                    var msg = session.message;                               
-                                     var attachment = msg.attachments[0];
-                                        session.send({
-                                            text: "Gst Certificate:",
-                                            attachments: [
-                                                {
-                                                    contentType: "application/" + exte,
-                                                    contentUrl: attachdoc,                            
-                                                    name: "click here to open file"
-                                                }
-                                            ]
-                                        });   
-                                    }
-                                    else{
-                                        session.send("Gst Certificate Not attach");
-                                    }
+                                {                                   
                                     session.send('Vendor Name : %s \n GST No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].GST_NO);
-                                    session.endDialogWithResult(results);
+                                    //session.endDialogWithResult(results);
                                 }
                                 else if(session.conversationData[Gloabalentity1]=="PanNo")
-                                {
-                                    attachdoc = getattachdocument(session,bodydata);                              
-                                    var exte = getextention(attachdoc);
-                                    if(attachdoc)
-                                    {
-                                    var msg = session.message;                               
-                                    var attachment = msg.attachments[0];
-                                    session.send({text: "PAN Card Image:",attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"}]});
-                                    }
-                                    else{
-                                        session.send("PAN card copy Not attach");
-                                    }
-                                   
-                                   
+                                {                         
                                     session.send('Vendor Name : %s \n PAN No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].PAN_NO);
-                                    session.endDialogWithResult(results);
+                                   // session.endDialogWithResult(results);
 
                                 }
-                                else
-                                {
-                                    session.send('Please narrow your search');
-                                    session.endDialogWithResult(results);
-                                }
+                                // else
+                                // {
+                                //     session.send('Please narrow your search');
+                                //     //session.endDialogWithResult(results);
+                                // }
+                                //get gst or pan attach document 
+                            
+                            attachdoc = getattachdocument(session,bodydata);                               
+                            var exte = getextention(attachdoc);
+                            if(attachdoc)
+                            {
+                            var msg = session.message;                               
+                            var attachment = msg.attachments[0];                                 
+                                session.send({text: "Attach Document:",
+                                    attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"
+                                        }
+                                    ]
+                                });
+                                session.endDialogWithResult(results); 
+                            }
+                            else{
+                                session.send("Document not attach");
+                                session.endDialog(); 
+                            }
+
                         }    
                         else
                         {
@@ -681,11 +816,6 @@ bot.dialog('GSTandPAN_NoDialog',[
 //vendor extention dialog
 bot.dialog('ExtensionDialog',[
     function (session, args, next) {
-
-        //setintent
-       // intent = args.intent;
-       // session.conversationData[GloabalIntent] = intent.intent;    
-       // entity = builder.EntityRecognizer.findEntity(intent.entities, 'Name');
 
        if(args.Entity==true)
        {                
@@ -738,17 +868,19 @@ bot.dialog('ExtensionDialog',[
                     var attachments = [];
 
                         var attachments = getCardsAttachmentsForExtensionList(session,abc);
+                        if(attachments.length>0)
+                        {
                         msg.attachments(attachments);
                         session.send(msg);
                         session.endDialog(); 
-                       
-
-
-
-                    //end adaptive
-                      //  session.send('ORGANISATION_NAME  : %s \n COMPANY_CODE: %s ',abc[0].EXTENSION_LIST[i].ORGANISATION_NAME,abc[0].EXTENSION_LIST[i].COMPANY_CODE +'<br>' );
-                     // } 
-                   
+                        }
+                        else
+                        {
+                            
+                            session.send("Extensions not available");
+                            session.endDialog(); 
+                        }
+                     
                 }
                 //for multiple record
                 else
@@ -796,16 +928,29 @@ bot.dialog('ExtensionDialog',[
                      msg.attachmentLayout(builder.AttachmentLayout.carousel);                   
                      var attachments = [];                                            
                      var attachments = getCardsAttachmentsForExtensionList(session,abc);
-                     msg.attachments(attachments);
-                     session.send(msg);
-                     session.endDialog(); 
+                     if(attachments.length>0)
+                        {
+                            msg.attachments(attachments);
+                            session.send(msg);
+                            session.endDialog(); 
+                        }
+                        else
+                        {
+                            
+                            session.send("Extensions not available");
+                            session.endDialog(); 
+                        }
                  }                            
              });                        
             }
             else 
             {
-               session.conversationData[GloabalIntent]="Vendor.Extensions";               
-               session.beginDialog('askForVendorName');  
+            //    session.conversationData[GloabalIntent]="Vendor.Extensions";               
+            //    session.beginDialog('askForVendorName');  
+                var msgfornodata = new builder.Message();    
+                msgfornodata.text("It looks like you are looking for “extensions” or “associations” but you didn't mention _vendor name_.\n You may ask things like “extension for _ABC Ltd_” or “association for _ABC Ltd_” ");        
+                session.send(msgfornodata);           
+                session.endDialog();  
             }
         }   
       
@@ -828,9 +973,18 @@ bot.dialog('ExtensionDialog',[
                     msg.attachmentLayout(builder.AttachmentLayout.carousel);                   
                     var attachments = [];                                            
                     var attachments = getCardsAttachmentsForExtensionList(session,abc);
-                    msg.attachments(attachments);
-                    session.send(msg);
-                    session.endDialog(); 
+                    if(attachments.length>0)
+                    {
+                        msg.attachments(attachments);
+                        session.send(msg);
+                        session.endDialog(); 
+                    }
+                    else
+                    {
+                        
+                        session.send("Extensions not available");
+                        session.endDialog(); 
+                    }
             }                            
         }); 
         session.endDialog();
@@ -1016,8 +1170,11 @@ bot.dialog('AllDocumentDialog',[
             }
             else 
             {
-                session.conversationData[GloabalIntent]="Vendor.AllDocument";               
-                session.beginDialog('askForVendorName');  
+                var msgfornodata = new builder.Message();    
+                msgfornodata.text("It looks like you are looking for “All document” or “document” but you didn't mention _vendor name_.\n You may ask things like “All documents for _ABC Ltd_” or “documents for _ABC Ltd_” ");        
+                session.send(msgfornodata);   
+                // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
+                session.endDialog(); 
             }
         }   
       
@@ -1121,13 +1278,13 @@ bot.dialog('MaterialDialog',[
                       
                         //material extension list
 
-                        var prompt1 = new builder.Message(session);
-                        prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                        var attachments1 = [];                   
-                        var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                        prompt1.attachments(attachments1);
-                        session.send("Up to top 10 Material Details are shown.");
-                        session.send(prompt1);
+                        // var prompt1 = new builder.Message(session);
+                        // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
+                        // var attachments1 = [];                   
+                        // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
+                        // prompt1.attachments(attachments1);
+                        // session.send("Up to top 10 Material Details are shown.");
+                        // session.send(prompt1);
 
 
                         //material details
@@ -1145,7 +1302,7 @@ bot.dialog('MaterialDialog',[
                     // session.endDialog();
                 }
                 else{
-                    session.send('Data not available for material code : %s',session.conversationData[GlobalMaterialCode]+'Please narrow your search' );
+                    session.send('Data not available for material code : %s',session.conversationData[GlobalMaterialCode]);
                     session.endDialog();
                 }
         }                                 
@@ -1171,13 +1328,13 @@ bot.dialog('MaterialDialog',[
                 if(abc.length>0)
                     {                    
                         //material extension list
-                        var prompt1 = new builder.Message(session);
-                        prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                        var attachments1 = [];                   
-                        var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                        prompt1.attachments(attachments1);
-                        session.send("Up to top 10 Material Details are shown.");
-                        session.send(prompt1);
+                        // var prompt1 = new builder.Message(session);
+                        // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
+                        // var attachments1 = [];                   
+                        // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
+                        // prompt1.attachments(attachments1);
+                        // session.send("Up to top 10 Material Details are shown.");
+                        // session.send(prompt1);
 
                         //material details
                         var msg = new builder.Message(session);
@@ -1190,7 +1347,7 @@ bot.dialog('MaterialDialog',[
                   
                 }
                 else{
-                    session.send('Data Not Available for material Name : %s',session.conversationData[GlobalMaterialName]+'Please narrow your search' );
+                    session.send('Data Not Available for material Name : %s',session.conversationData[GlobalMaterialName]);
                     session.endDialog();
                 }
         }                                 
@@ -1212,13 +1369,13 @@ bot.dialog('MaterialDialog',[
                 session.conversationData[GlobalMaterialCode] = abc[0].MATERIAL_NUMBER;
                     
                     //material extension list
-                    var prompt1 = new builder.Message(session);
-                    prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                    var attachments1 = [];                   
-                    var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                    prompt1.attachments(attachments1);
-                    session.send("Up to top 10 Material Details are shown.");
-                    session.send(prompt1);
+                    // var prompt1 = new builder.Message(session);
+                    // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
+                    // var attachments1 = [];                   
+                    // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
+                    // prompt1.attachments(attachments1);
+                    // session.send("Up to top 10 Material Details are shown.");
+                    // session.send(prompt1);
 
 
                     //material details
@@ -1232,7 +1389,7 @@ bot.dialog('MaterialDialog',[
 
             }  
             else{
-                session.send('Data Not Available for material code : %s',session.conversationData[GlobalMaterialCode]+'Please narrow your search' );
+                session.send('Data Not Available for material code : %s',session.conversationData[GlobalMaterialCode]);
                 session.endDialog();
             } 
         }
@@ -1242,7 +1399,12 @@ bot.dialog('MaterialDialog',[
       }
       else 
       {
-        session.beginDialog('askMoreAttribute');  
+        var msgfornodata = new builder.Message();    
+        msgfornodata.text("It looks like you are looking for “Material Details” or but you didn't mention _material name_ or _material code_.\n You may ask things like “material details for _GRASS CARPET_” or “material details for _200131_” ");        
+        session.send(msgfornodata);   
+        // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
+        session.endDialog(); 
+        //session.beginDialog('askMoreAttribute');  
       }
     }
 
@@ -1370,7 +1532,13 @@ bot.dialog('ServiceDialog',[
       }
       else 
       {
-        session.beginDialog('askMoreAttributeForService');  
+        var msgfornodata = new builder.Message();    
+        msgfornodata.text("It looks like you are looking for “Service Details” or but you didn't mention _service name_ or _service code_.\n You may ask things like “service details for _Fuel Charges_” or “service details for _3001655_” ");        
+        session.send(msgfornodata);   
+        // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
+        session.endDialog(); 
+        
+        //session.beginDialog('askMoreAttributeForService');  
       }
     }
 
@@ -1655,8 +1823,54 @@ function getattachdocument(session,abc)
         {
             attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-
-
+        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="VAT Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="VAT_Certificate")
+        // {
+        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        // }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="EM Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="EM_Certificate")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
+        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="CST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="CST_Certificate")
+        // {
+        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        // }
+        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Company Registration Certificate" && session.conversationData[Gloabalentity1]=="Company_Registration")
+        // {
+        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        // }
+        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="IOM/Approval Copy For Procurement" && session.conversationData[Gloabalentity1]=="IOM/Approval")
+        // {
+        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        // }
+        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="ST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="ST_Certificate")
+        // {
+        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        // }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="PF Certificate/ Undertaking" && session.conversationData[Gloabalentity1]=="PF_Certificate")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }       
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Proprietorship Declaration" && session.conversationData[Gloabalentity1]=="Proprietorship_Declaration")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Cancelled Cheque Copy" && session.conversationData[Gloabalentity1]=="Cancelled_Cheque")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Invoice" && session.conversationData[Gloabalentity1]=="Invoice")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="RERA Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="RERA_Certificate")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
+        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Channel Partner Agreement " && session.conversationData[Gloabalentity1]=="Channel_Partner_Agreement")
+        {
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+        }
     }
     return attachdocpath;
 }
@@ -1665,45 +1879,102 @@ function getattachdocument(session,abc)
 //ask for vendor name in vendor details
 bot.dialog('askForVendorName', [
     function (session) {
-        builder.Prompts.text(session, "Please Enter Vendor Name");
+      //  session.dialogData.alarm = {};
+        builder.Prompts.text(session, "It looks like you are looking for vendor details but you didn't mention vendor name, gst or pan. You may ask things like vendor details for ABC Ltd or vendor details for ABCPX0000G");
     },
-    function (session,result) {
-        //session.endDialogWithResult(results);
-        session.conversationData[GlobalVendorName]= result.response;
-        session.conversationData[Gloabalentity]="Name";
-        //session.send("%s",result.response);
-
-        if(result.response.length > 3)
-        {
-            if(session.conversationData[GloabalIntent]=="Vendor.AllDocument")
-            {
-                session.beginDialog('AllDocumentDialog',{'Entity': true});
-        
-            }
-            else if(session.conversationData[GloabalIntent]=="Vendor.Number")
-            {
-                session.beginDialog('GSTandPAN_NoDialog',{'Entity': true});
-            }
-            else if(session.conversationData[GloabalIntent]=="Vendor.AllDetails")
-            {
-                session.beginDialog('AllDetailsDialog',{'Entity': true});
-            }  
-            else if(session.conversationData[GloabalIntent]=="Vendor.Extensions")
-            {
-                session.beginDialog('ExtensionDialog',{'Entity': true});
-            }      
-            else
-            {
-
-            }
+    function (session, results, next) {
+     
+        if (results.response) {
+            session.dialogData.name = results.response;
+         
+            if (results.response.length >= 3) {
+                
+                    session.send("%s",session.conversationData[GloabalIntent]);
+                    session.conversationData[GlobalVendorName]= results.response;
+                    session.conversationData[Gloabalentity]="Name";
+                  
+                        if(session.conversationData[GloabalIntent]=="Vendor.AllDocument")
+                        {
+                            session.beginDialog('AllDocumentDialog',{'Entity': true});
+                    
+                        }
+                        else if(session.conversationData[GloabalIntent]=="Vendor.Number")
+                        {
+                            session.beginDialog('GSTandPAN_NoDialog',{'Entity': true});
+                        }
+                        else if(session.conversationData[GloabalIntent]=="Vendor.AllDetails")
+                        {
+                            session.beginDialog('AllDetailsDialog',{'Entity': true});
+                        }  
+                        else if(session.conversationData[GloabalIntent]=="Vendor.Extensions")
+                        {
+                            session.beginDialog('ExtensionDialog',{'Entity': true});
+                        }      
+                        else
+                        {
+            
+                        }
+                    }
+                    else{
+                        session.send("Please enter at least 4 character in desacription or more");
+                        session.beginDialog('askForVendorName');  
+                        //next();
+                    }
+        } else {
+            next();
         }
-        else{
-            session.send("Please enter at least 4 character in desacription or more");
-            session.beginDialog('askForVendorName');  
-        }
-      
     }
-])
+    // function (session, next) {          
+    //    if(session){
+    //     builder.dialogData.text(session, "Please Enter Vendor Name");
+    //    }else{
+    //        next();
+    //    }
+            
+    //         //session.send("%s",JSON.parse(session));
+    //         console.log("session",session);
+    // },
+    // function (session,results) {
+     
+    //     //session.endDialogWithResult(results);
+    //     if (results.response.length >= 3) {
+    //         session.dialogData.time = builder.EntityRecognizer.resolveTime([results.response]);
+     
+    //     session.send("%s",session.conversationData[GloabalIntent]);
+    //     session.conversationData[GlobalVendorName]= results.response;
+    //     session.conversationData[Gloabalentity]="Name";
+   
+    //         if(session.conversationData[GloabalIntent]=="Vendor.AllDocument")
+    //         {
+    //             session.beginDialog('AllDocumentDialog',{'Entity': true});
+        
+    //         }
+    //         else if(session.conversationData[GloabalIntent]=="Vendor.Number")
+    //         {
+    //             session.beginDialog('GSTandPAN_NoDialog',{'Entity': true});
+    //         }
+    //         else if(session.conversationData[GloabalIntent]=="Vendor.AllDetails")
+    //         {
+    //             session.beginDialog('AllDetailsDialog',{'Entity': true});
+    //         }  
+    //         else if(session.conversationData[GloabalIntent]=="Vendor.Extensions")
+    //         {
+    //             session.beginDialog('ExtensionDialog',{'Entity': true});
+    //         }      
+    //         else
+    //         {
+
+    //         }
+    //     }
+    //     else{
+    //         session.send("Please enter at least 4 character in desacription or more");
+    //         session.beginDialog('askForVendorName');  
+    //         //next();
+    //     }
+    
+      
+    // }
+]);
 
 //ask attribute for material code
 bot.dialog('askMoreAttribute', [
@@ -1728,13 +1999,13 @@ bot.dialog('askMoreAttribute', [
                   {
                     //material extension list
 
-                    var prompt1 = new builder.Message(session);
-                    prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                    var attachments1 = [];                   
-                    var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                    prompt1.attachments(attachments1);
-                    session.send("Up to top 10 Material Details are shown.");
-                    session.send(prompt1);
+                    // var prompt1 = new builder.Message(session);
+                    // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
+                    // var attachments1 = [];                   
+                    // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
+                    // prompt1.attachments(attachments1);
+                    // session.send("Up to top 10 Material Details are shown.");
+                    // session.send(prompt1);
 
 
                     //material details
@@ -1914,9 +2185,12 @@ bot.dialog('askForPendingorDetailsRequest', [
 }
 ])
 
+
+
 //adaptive card for vendor details
 function getCardsAttachmentsForVendorName(session,abc) {
 
+    var statusimage = getstatusURL(session,abc);
     
     var card = {
             'contentType': 'application/vnd.microsoft.card.adaptive',
@@ -1924,172 +2198,251 @@ function getCardsAttachmentsForVendorName(session,abc) {
                 "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
                 "type": "AdaptiveCard",
                 "version": "1.0",
-                "body": [
+                "body": [                    
                     {
-                    "type": "ColumnSet",
-                    "columns": [
-                        {
-                            "type": "Column",
-                            "width": 3,
-                            "items": [
-                                    {
-                                        'type': 'TextBlock',
-                                        'text': 'Vendor Name:',
-                                        'weight': 'bolder',
-                                        
-                                    }]
-                        },
-                        {
-                            "type": "Column",
-                            "width": 7,
-                            "items": [
-                                    {
-                                                'type': 'TextBlock',
-                                                'text': abc[0].VENDOR_NAME,
-                                    }]
-                        }]
-                    },
-                    {
-                    "type": "ColumnSet",
-                    "columns": [
-                        {
-                            "type": "Column",
-                            "width": 3,
-                            "items": [
-                                    {
-                                        'type': 'TextBlock',
-                                        'text': 'Vendor Code:',
-                                        'weight': 'bolder',
-                                        
-                                    }]
-                        },
-                        {
-                            "type": "Column",
-                            "width": 7,
-                            "items": [
-                                    {
-                                                'type': 'TextBlock',
-                                                'text': abc[0].VENDOR_CODE,
-                                    }]
-                        }]
-                    },
-                    {
-                        "type": "ColumnSet",
-                        "columns": [
+                        "type": "Container",
+                        "items": [
                             {
-                                "type": "Column",
-                                "width": 3,
-                                "items": [
-                                        {
-                                            'type': 'TextBlock',
-                                            'text': 'Request No:',
-                                            'weight': 'bolder',
-                                        }]
-                            },
-                            {
-                                "type": "Column",
-                                "width":7,
-                                "items": [
-                                        {
-                                                    'type': 'TextBlock',
-                                                    'text': abc[0].REQUEST_NO,
-                                        }]
-                            }]
-                    },
-                    {
-                            "type": "ColumnSet",
-                            "columns": [
-                                {
-                                    "type": "Column",
-                                    "width": 3,
-                                    "items": [
-                                            {
-                                                'type': 'TextBlock',
-                                                'text': 'Status:',
-                                                'weight': 'bolder',
-                                            }]
-                                },
-                                {
-                                    "type": "Column",
-                                    "width": 7,
-                                    "items": [
-                                            {
-                                                        'type': 'TextBlock',
-                                                        'text': abc[0].STATUS,
-                                            }]
-                                }]
-                    },
-                    {
                                 "type": "ColumnSet",
                                 "columns": [
                                     {
                                         "type": "Column",
-                                        "width": 3,
                                         "items": [
-                                                {
-                                                    'type': 'TextBlock',
-                                                    'text': 'Approved By:',
-                                                    'weight': 'bolder',
-                                                }]
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": abc[0].VENDOR_NAME,
+                                                "wrap": true
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "spacing": "None",
+                                                "text": abc[0].VENDOR_CODE,
+                                                "isSubtle": true,
+                                                "wrap": true
+                                            }
+                                        ],
+                                        "width": "stretch"
                                     },
                                     {
                                         "type": "Column",
-                                        "width":7,
                                         "items": [
-                                                {
-                                                            'type': 'TextBlock',
-                                                            'text': abc[0].APPROVED_BY,
-                                                }]
-                                    }]
+                                            {
+                                                "type": "Image",
+                                                "style": "Person",
+                                                "url":statusimage,
+                                                "size": "small"
+                                            }
+                                        ],
+                                        "width": "auto"
+                                    },
+
+                                ] }
+                            ]
                     },
                     {
-                                    "type": "ColumnSet",
-                                    "columns": [
+                        "type": "Container",
+                        "separator": true,
+                        "items": [
+                            {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
                                         {
-                                            "type": "Column",
-                                            "width": 3,
-                                            "items": [
-                                                    {
-                                                        'type': 'TextBlock',
-                                                        'text': 'PAN No:',
-                                                        'weight': 'bolder',
-                                                    }]
+                                            "type": "TextBlock",
+                                            "size": "Medium",
+                                            "weight": "Bolder",
+                                            "text": "PAN No:",
+                                            
                                         },
+                                       
+                                    ],
+                                    "width": 2
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
                                         {
-                                            "type": "Column",
-                                            "width":7,
-                                            "items": [
-                                                    {
-                                                                'type': 'TextBlock',
-                                                                'text': abc[0].PAN_NO,
-                                                    }]
-                                        }]
+                                            "type": "TextBlock",
+                                            "size": "Medium",                                           
+                                            "text": abc[0].PAN_NO,
+                                           
+                                        }
+                                    ],
+                                    "width": 3
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",
+                                            "weight": "Bolder",
+                                            "text": "GST No:",
+                                           
+                                        },
+                                       
+                                    ],
+                                    "width": 2
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",                                            
+                                            "text": abc[0].GST_NO,
+                                          
+                                        }
+                                    ],
+                                    "width": 3
+                                },
+
+
+
+                            ] }
+                        ]
+
                     },
                     {
-                        "type": "ColumnSet",
-                        "columns": [
+                        "type": "Container",
+                        "items": [
                             {
-                                "type": "Column",
-                                "width": 3,
-                                "items": [
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
                                         {
-                                            'type': 'TextBlock',
-                                            'text': 'GST No:',
-                                            'weight': 'bolder',
-                                        }]
-                            },
+                                            "type": "TextBlock",
+                                            "size": "Medium",
+                                            "weight": "Bolder",
+                                            "text": "Status:",
+                                            
+                                        },
+                                       
+                                    ],
+                                    "width": 2
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",                                           
+                                            "text": abc[0].STATUS,
+                                           
+                                        }
+                                    ],
+                                    "width": 3
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",
+                                            "weight": "Bolder",
+                                            "text": "By:",
+                                           
+                                        },
+                                       
+                                    ],
+                                    "width": 2
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",                                            
+                                            "text": abc[0].APPROVED_BY,
+                                          
+                                        }
+                                    ],
+                                    "width": 3
+                                },
+
+
+
+                            ] }
+                        ]
+
+                    },
+                    {
+                        "type": "Container",
+                        "items": [
                             {
-                                "type": "Column",
-                                "width":7,
-                                "items": [
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "items": [
                                         {
-                                                    'type': 'TextBlock',
-                                                    'text': abc[0].GST_NO,
-                                        }]
-                            }]
-                    },      
-                                        
-                                      
+                                            "type": "TextBlock",
+                                            "size": "Medium",
+                                            "weight": "Bolder",
+                                            "text": "Request Number:",
+                                            
+                                        },
+                                       
+                                    ],
+                                    "width": "auto"
+                                },
+                                {
+                                    "type": "Column",
+                                    "items": [
+                                        {
+                                            "type": "TextBlock",
+                                            "size": "Medium",                                           
+                                            "text": abc[0].REQUEST_NO,
+                                           
+                                        }
+                                    ],
+                                    "width": "auto"
+                                }
+                          ] }
+                        ]
+
+                    }
+                            // {
+                            //     "type": "FactSet",
+                            //     "facts": [
+                            //         {
+                            //             "title": "Vendor Name:",
+                            //             "value": abc[0].VENDOR_NAME
+                            //         },
+                            //         {
+                            //             "title": "Vendor Code:",
+                            //             "value": abc[0].VENDOR_CODE
+                            //         },
+                            //         {
+                            //             "title": "Request No:",
+                            //             "value": abc[0].REQUEST_NO
+                            //         },
+                            //         {
+                            //             "title": "Status:",
+                            //             "value": abc[0].STATUS
+                            //         },
+                            //         {
+                            //             "title": "Approved By:",
+                            //             "value": abc[0].APPROVED_BY
+                            //         },
+                            //         {
+                            //             "title": "PAN No:",
+                            //             "value": abc[0].PAN_NO
+                            //         },
+                            //         {
+                            //             "title": "GST No:",
+                            //             "value": abc[0].GST_NO
+                            //         },
+                            //     ]
+                            // }
+                       
+                              
                    ]//body close
                 }//content
             };
@@ -2233,8 +2586,21 @@ function getCardsAttachmentsForMaterialextension(session,abc)
 function getCardsAttachmentsForMaterialDetails(session,abc)
 {  
         var attachments=[];
+        var i,j;
+        var extensionlist="";
+
         for(i=0;i<abc.length;i++)
         {
+
+            //loop for find extension list 
+            for(j=0;j<abc[i].EXTENSION_LIST.length;j++)
+            {
+                if(abc[i].EXTENSION_LIST[j].PLANT != undefined || abc[i].EXTENSION_LIST[j].PLANT !=null || abc[i].EXTENSION_LIST[j].PLANT !="")
+                {
+                    extensionlist = extensionlist + "," + abc[i].EXTENSION_LIST[j].PLANT ;
+                }
+            }
+
             //adaptive
             var card = {
                 "contentType": "application/vnd.microsoft.card.adaptive",
@@ -2416,7 +2782,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                 "items": [
                                         {
                                                     "type": "TextBlock",
-                                                    "text": abc[i].MATERIAL_NUMBER,
+                                                    "text": abc[i].HSN_DESCRIPTION,
                                         }]
                             }]
                         },
@@ -2467,29 +2833,53 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                             }]
                         },
                         {
-                                            "type": "ColumnSet",
-                                            "columns": [
-                                                {
-                                                    "type": "Column",
-                                                    "width": 4,
-                                                    "items": [
-                                                            {
-                                                                "type": "TextBlock",
-                                                                "text": "Material Type:",
-                                                                "weight": "bolder",
-                                                            }]
-                                                },
-                                                {
-                                                    "type": "Column",
-                                                    "width":6,
-                                                    "items": [
-                                                            {
-                                                                        "type": "TextBlock",
-                                                                        "text": abc[i].MATERIAL_TYPE,
-                                                            }]
-                                                }]
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": 4,
+                                    "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Valuation Class:",
+                                                "weight": "bolder",
+                                            }]
+                                },
+                                {
+                                    "type": "Column",
+                                    "width":6,
+                                    "items": [
+                                            {
+                                                        "type": "TextBlock",
+                                                        "text": abc[i].VALUATION_CLASS,
+                                            }]
+                                }]
                         },
-                         
+                        {
+                            "type": "ColumnSet",
+                            "columns": [
+                                {
+                                    "type": "Column",
+                                    "width": 4,
+                                    "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Extension List(Plant Name):",
+                                                "weight": "bolder",
+                                            }]
+                                },
+                                {
+                                    "type": "Column",
+                                    "width":6,
+                                    "items": [
+                                            {
+                                                        "type": "TextBlock",
+                                                        "text": extensionlist,
+                                            }]
+                                }]
+                        },
+
+
                     ]
                         }
                                           
@@ -3001,3 +3391,49 @@ function getCardsAttachmentsForRequestDetails(session,abc)
     return attachments;
 }
 
+//greeting dialog
+bot.dialog('SmalltalkDialog',[
+    function (session, args, next) {  
+        // session.send("welcome smalltalk"); 
+        // session.send("%s",session.message.text);
+        qnaClient.post({ question: session.message.text }, function (err, res) {
+            if (err) {
+               // console.error('Error from callback:', err);               
+                session.send('wrong - something went wrong.');
+                return;
+            }
+        
+            if (res) {
+                // Send reply from QnA back to user
+                session.send(res);
+            } else {
+                // Confidence in top result is not high enough - discard result
+                session.send('Hmm, I didn\'t quite understand you there. Care to rephrase?')
+            }
+        });
+        
+        
+        // session.send('%s.',session.message.text);   
+         session.endDialog();
+    }
+]).triggerAction({
+    matches:'SmallTalk'
+})
+
+function getstatusURL(session,abc)
+{
+    var url;
+    if(abc[0].STATUS =="Approved")
+    {
+       url="http://118.67.249.4:85/UAT_VRM/assets/img/approved1.png"; 
+    }
+    else if(abc[0].STATUS =="Cancel")
+    {
+        url="http://118.67.249.4:85/UAT_VRM/assets/img/cancel.png"; 
+    }
+    else if(abc[0].STATUS =="Resubmit")
+    {
+        url="http://118.67.249.4:85/UAT_VRM/assets/img/reject.png";
+    }
+    return url;
+}
