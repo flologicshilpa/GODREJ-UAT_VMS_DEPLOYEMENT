@@ -198,7 +198,6 @@ bot.dialog('endConversationDialog',[
                         "text": " _**“Vendor details for Kshetra”**_ "+
                         "\r _**“My pending request”**_ " +
                         "\n _**“My requests”**_ " +
-                        "\n _**“Request details for jdoe@godrehproperties.com”**_ " +
                         "\n _**“Service details”**_ " +
                         "\n _**“Service details for 3001655”**_ " +
                         "\n _**“Material detail”**_ " +
