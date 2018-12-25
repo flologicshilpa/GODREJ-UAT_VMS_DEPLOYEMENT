@@ -98,10 +98,10 @@ bot.recognizer(recognizer);
 //greeting dialog
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
-      session.conversationData = {};
+     
         var name=session.message.user.name;
-        var id=session.message.user.id;       
-        var token1 = session.message.user.token;     
+        var id=session.message.user.id;
+        var token1 = session.message.user.token;
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
         
         intent = args.intent;
