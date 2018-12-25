@@ -27,7 +27,9 @@ var Request = require("request");
 //common variable
 var i,intent="",entity,gstentity,panentity;
 var auth;
- 
+var id;
+var token1;
+
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
 var Gloabalentity="Gloabalentity";
@@ -100,8 +102,8 @@ bot.dialog('GreetingDialog',[
     function (session, args, next) {
      
         var name=session.message.user.name;
-        var id=session.message.user.id;
-        var token1 = session.message.user.token;
+        id=session.message.user.id;
+        token1 = session.message.user.token;
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
         
         intent = args.intent;
