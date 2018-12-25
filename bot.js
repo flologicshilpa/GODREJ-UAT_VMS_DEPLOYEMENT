@@ -25,7 +25,7 @@ const connector = new builder.ChatConnector({
 var Request = require("request");
 
 //common variable
-var i,intent="",entity,gstentity,panentity,name,id,token1;
+var i,intent="",entity,gstentity,panentity;
 var auth;
  
 //variable declaration for session
@@ -99,9 +99,9 @@ bot.recognizer(recognizer);
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
       session.conversationData = {};
-        name=session.message.user.name;
-        id=session.message.user.id;       
-        token1 = session.message.user.token;     
+        var name=session.message.user.name;
+        var id=session.message.user.id;       
+        var token1 = session.message.user.token;     
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
         
         intent = args.intent;
