@@ -25,11 +25,9 @@ const connector = new builder.ChatConnector({
 var Request = require("request");
 
 //common variable
-var i,intent="",entity,gstentity,panentity;
+var i,intent="",entity,gstentity,panentity,name,id,token1;
 var auth;
- var name;
- var id;       
- var token1;  
+ 
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
 var Gloabalentity="Gloabalentity";
@@ -84,14 +82,14 @@ bot.recognizer(recognizer);
 
 
 
-bot.on("event", function (event) {
-    var msg = new builder.Message().address(event.address);
-    if (event.name === "customEvent") {
-        // HOW CAN I STORE event.value IN session.userData ? 
-      //  console.log(event.value);
-        session.send("%s",event.value)
-    }
-});
+// bot.on("event", function (event) {
+//     var msg = new builder.Message().address(event.address);
+//     if (event.name === "customEvent") {
+//         // HOW CAN I STORE event.value IN session.userData ? 
+//       //  console.log(event.value);
+//         session.send("%s",event.value)
+//     }
+// });
 
 
 //for small talk
@@ -101,9 +99,9 @@ bot.on("event", function (event) {
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
       session.conversationData = {};
-        var name=session.message.user.name;
-        var id=session.message.user.id;       
-        var token1 = session.message.user.token;     
+        name=session.message.user.name;
+        id=session.message.user.id;       
+        token1 = session.message.user.token;     
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
         
         intent = args.intent;
