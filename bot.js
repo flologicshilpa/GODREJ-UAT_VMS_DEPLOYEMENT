@@ -27,6 +27,8 @@ var Request = require("request");
 //common variable
 var i,intent="",entity,gstentity,panentity;
 var auth;
+var GloabalUserId;
+var GlobalToken;
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
 var Gloabalentity="Gloabalentity";
@@ -41,8 +43,8 @@ var GlobalADID="GlobalADID";
 var GlobalPanGSTCode="GlobalPanGSTCode";
 var userquestion="userquestion";
 var conversationid="conversationid";
-var GloabalUserId="GloabalUserId";
-var GlobalToken="GlobalToken";
+//var GloabalUserId="GloabalUserId";
+//var GlobalToken="GlobalToken";
 
 //var inMemoryStorage = new builder.MemoryBotStorage();
 
@@ -97,15 +99,14 @@ bot.on("event", function (event) {
 //greeting dialog
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
-      
-
+      session.conversationData = {};
         var name=session.message.user.name;
         var id=session.message.user.id;
-        session.conversationData[GloabalUserId]=session.message.user.id;
+        GloabalUserId =session.message.user.id;
         var token1 = session.message.user.token;
-         session.conversationData[GlobalToken]=session.message.user.token;
-        auth = "Basic " + new Buffer(session.conversationData[GloabalUserId] + ":" + session.conversationData[GlobalToken]).toString("base64");
-        session.conversationData = {};
+         GlobalToken=session.message.user.token;
+        auth = "Basic " + new Buffer(GloabalUserId + ":" + GlobalToken).toString("base64");
+        
         intent = args.intent;
 
 
