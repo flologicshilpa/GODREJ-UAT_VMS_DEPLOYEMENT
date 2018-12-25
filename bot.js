@@ -149,9 +149,9 @@ bot.dialog('GreetingDialog',[
                 "\n _**“Material detail”**_ " +
                 "\n _**“Material detail for 200735”**_ " +
                 "\n _**“Pan no for kshetra”**_ "+
-                "\n _**“gst no for kshetra”**_ "+
-                "\n _**“extension for kshetra”**_ "+
-                "\n _**“all document for kshetra”**_ "              
+                "\n _**“Gst no for kshetra”**_ "+
+                "\n _**“Extension for kshetra”**_ "+
+                "\n _**“All document for kshetra”**_ "              
 
             },
         ]
@@ -411,7 +411,7 @@ bot.dialog('AllDetailsDialog',[
                            // session.send("%s",JSON.stringify(dict));
                             if(abc.length > 4)
                             {
-                                session.send("More than 5 rows return please narrow your search.If name not found please narrow your search or resubmit the query");
+                                session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
                                 builder.Prompts.choice(session, "Select Name",dict,{listStyle:3});
                             }
                             else
@@ -422,7 +422,7 @@ bot.dialog('AllDetailsDialog',[
                         //no record found  
                         else
                         {
-                                session.send("No data found for vendor : %s",session.conversationData[GlobalVendorName]);
+                                session.send("No queried data found for : %s",session.conversationData[GlobalVendorName]);
                         }            
                     }                            
                 });   
@@ -654,7 +654,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                             }
                             if(abc.length > 4)
                             {
-                                    session.send("More than 5 rows return please narrow your search.If name not found please narrow your search or resubmit the query");
+                                   session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
                                     builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
                             }
                             else{
@@ -724,7 +724,7 @@ bot.dialog('GSTandPAN_NoDialog',[
 
                 }
                 else{
-                    session.send("Data not available for vendor : %s",session.conversationData[GlobalVendorName]);
+                    session.send("No queried data available for: %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
                
@@ -801,7 +801,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                         }    
                         else
                         {
-                            session.send("Data not available for vendor : %s",session.conversationData[GlobalVendorName]);
+                            session.send("No queried data available for : %s",session.conversationData[GlobalVendorName]);
                             session.endDialog();
                         }
                     }                        
@@ -900,7 +900,7 @@ bot.dialog('ExtensionDialog',[
                     }
                     if(abc.length > 4)
                     {
-                            session.send("More than 5 rows return please narrow your search.If name not found please narrow your search or resubmit the query");
+                             session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
                             builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
                     }
                     else{
