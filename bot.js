@@ -29,6 +29,7 @@ var i,intent="",entity,gstentity,panentity;
 var auth;
 var id;
 var token1;
+var name;
 
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
@@ -101,7 +102,7 @@ bot.recognizer(recognizer);
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
      
-        var name=session.message.user.name;
+        name=session.message.user.name;
         id=session.message.user.id;
         token1 = session.message.user.token;
         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
