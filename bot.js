@@ -96,6 +96,8 @@ bot.on("event", function (event) {
 //greeting dialog
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
+         session.conversationData = {};
+
         var name=session.message.user.name;
         var id=session.message.user.id;
         var token1 = session.message.user.token;
@@ -163,66 +165,66 @@ bot.dialog('GreetingDialog',[
 })
 
 //end Conversation Dialog
-bot.dialog('endConversationDialog',[
-    function (session, args, next) {
-        session.conversationData = {};
+// bot.dialog('endConversationDialog',[
+//     function (session, args, next) {
+//         session.conversationData = {};
 
-        var name=session.message.user.name;
-        var id=session.message.user.id;
-        var token1 = session.message.user.token;
-        auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
-        intent = args.intent;
+//         var name=session.message.user.name;
+//         var id=session.message.user.id;
+//         var token1 = session.message.user.token;
+//         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
+//         intent = args.intent;
         
         
-        session.conversationData[GlobalADID]=id;
+//         session.conversationData[GlobalADID]=id;
         
-        session.conversationData[GloabalIntent] = intent.intent;       
-        session.send('Hello %s! Welcome to Vendor Bot.',name);
+//         session.conversationData[GloabalIntent] = intent.intent;       
+//         session.send('Hello %s! Welcome to Vendor Bot.',name);
 
-        var card = {  
+//         var card = {  
             
-            'contentType': 'application/vnd.microsoft.card.adaptive',
-            'content': {
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "type": "AdaptiveCard",
-                "version": "1.0",
+//             'contentType': 'application/vnd.microsoft.card.adaptive',
+//             'content': {
+//                 "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+//                 "type": "AdaptiveCard",
+//                 "version": "1.0",
 
-                    "body": [
-                    {
-                        "type": "TextBlock",
-                        "text": " **I can help you get details about vendors, materials, services \n and even your requests!** "+
-                        "\n You may ask me questions like:" 
-                    },
-                    {
-                        "type": "TextBlock",
-                        "text": " _**“Vendor details for Kshetra”**_ "+
-                        "\r _**“My pending request”**_ " +
-                        "\n _**“My requests”**_ " +
-                        "\n _**“Service details”**_ " +
-                        "\n _**“Service details for 3001655”**_ " +
-                        "\n _**“Material detail”**_ " +
-                        "\n _**“Material detail for 200735”**_ " +
-                        "\n _**“Pan no for kshetra”**_ "+
-                        "\n _**“gst no for kshetra”**_ "+
-                        "\n _**“extension for kshetra”**_ "+
-                        "\n _**“all document for kshetra”**_ "              
+//                     "body": [
+//                     {
+//                         "type": "TextBlock",
+//                         "text": " **I can help you get details about vendors, materials, services \n and even your requests!** "+
+//                         "\n You may ask me questions like:" 
+//                     },
+//                     {
+//                         "type": "TextBlock",
+//                         "text": " _**“Vendor details for Kshetra”**_ "+
+//                         "\r _**“My pending request”**_ " +
+//                         "\n _**“My requests”**_ " +
+//                         "\n _**“Service details”**_ " +
+//                         "\n _**“Service details for 3001655”**_ " +
+//                         "\n _**“Material detail”**_ " +
+//                         "\n _**“Material detail for 200735”**_ " +
+//                         "\n _**“Pan no for kshetra”**_ "+
+//                         "\n _**“gst no for kshetra”**_ "+
+//                         "\n _**“extension for kshetra”**_ "+
+//                         "\n _**“all document for kshetra”**_ "              
 
-                    },
+//                     },
                     
-                ]
-            }
-            }
-                var msg = new builder.Message()
-                .addAttachment(card)
-                session.send(msg);
-        session.send("You have stopped current conversation! that is okay, just ping me when you are ready and we can chat again.")              
-       // session.send('I am sorry I did not understand your question. Please retry the query or you may startover by clicking the start over button');        
-        session.endDialog();
-    }
+//                 ]
+//             }
+//             }
+//                 var msg = new builder.Message()
+//                 .addAttachment(card)
+//                 session.send(msg);
+//         session.send("You have stopped current conversation! that is okay, just ping me when you are ready and we can chat again.")              
+//        // session.send('I am sorry I did not understand your question. Please retry the query or you may startover by clicking the start over button');        
+//         session.endDialog();
+//     }
 
-]).triggerAction({
-    matches: 'Vendor.Cancel'
-})
+// ]).triggerAction({
+//     matches: 'Vendor.Cancel'
+// })
 
 //no intent and entity Dialog
 bot.dialog('NoneDialog',[
