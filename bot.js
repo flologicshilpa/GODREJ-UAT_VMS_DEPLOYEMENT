@@ -70,7 +70,9 @@ var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
 
 //universal bot connection
 const  bot = module.exports =  new builder.UniversalBot(connector, function (session, args) {  
-    
+     var reply = createEvent("changeBackground", session.message.text, session.message.address);
+        session.endDialog(reply);
+
  }).set('storage', cosmosStorage); 
 
 
@@ -81,6 +83,34 @@ const LuisModelUrl1 = process.env.LuisModelUrl || process.env.baseUrl; //'https:
 var recognizer = new builder.LuisRecognizer(LuisModelUrl1);
 bot.recognizer(recognizer);
 
+
+const createEvent = (eventName, value, address) => {
+    var msg = new builder.Message().address(address);
+    msg.data.type = "event";
+    msg.data.name = eventName;
+    msg.data.value = value;
+    return msg;
+}
+
+
+
+bot.on("event",function(event) {
+    console.log("message",event);
+    var msg = new builder.Message().address(event.address);
+    var address=event.address;
+    msg.data.textLocale = "en-us";
+    if (event.name === "btnRefresh") {
+        msg.data.text = "I see that you clicked a button.";
+      
+       
+        //session.beginDialog('GreetingDialog');  
+    }
+    //bot.send(msg);
+    bot.beginDialog(address,'endConversationDialog');
+   
+    // bot.beginDialog(msg,'/GreetingDialog');
+    // bot.beginDialog(message.from.address, '/GreetingDialog');
+})
 
 
 
@@ -170,67 +200,25 @@ bot.dialog('GreetingDialog',[
 })
 
 //end Conversation Dialog
-// bot.dialog('endConversationDialog',[
-//     function (session, args, next) {
-//         session.conversationData = {};
+bot.dialog('endConversationDialog',[
+    function (session, args, next) {
+        session.conversationData = {};
 
-//         var name=session.message.user.name;
-//         var id=session.message.user.id;
-//         var token1 = session.message.user.token;
-//         auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
-//         intent = args.intent;
+        var name=session.message.user.name;
+        var id=session.message.user.id;
+        var token1 = session.message.user.token;
+        auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
+      //  intent = args.intent;       
         
+        session.conversationData[GlobalADID]=id;
         
-//         session.conversationData[GlobalADID]=id;
-        
-//         session.conversationData[GloabalIntent] = intent.intent;       
-//         session.send('Hello %s! Welcome to Vendor Bot.',name);
+      //  session.conversationData[GloabalIntent] = intent.intent;       
+        session.send("You have stopped current conversation! that is okay, just ping me when you are ready and we can chat again.")              
+       // session.send('I am sorry I did not understand your question. Please retry the query or you may startover by clicking the start over button');        
+        session.endDialog();
+    }
 
-//         var card = {  
-            
-//             'contentType': 'application/vnd.microsoft.card.adaptive',
-//             'content': {
-//                 "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-//                 "type": "AdaptiveCard",
-//                 "version": "1.0",
-
-//                     "body": [
-//                     {
-//                         "type": "TextBlock",
-//                         "text": " **I can help you get details about vendors, materials, services \n and even your requests!** "+
-//                         "\n You may ask me questions like:" 
-//                     },
-//                     {
-//                         "type": "TextBlock",
-//                         "text": " _**“Vendor details for Kshetra”**_ "+
-//                         "\r _**“My pending request”**_ " +
-//                         "\n _**“My requests”**_ " +
-//                         "\n _**“Service details”**_ " +
-//                         "\n _**“Service details for 3001655”**_ " +
-//                         "\n _**“Material detail”**_ " +
-//                         "\n _**“Material detail for 200735”**_ " +
-//                         "\n _**“Pan no for kshetra”**_ "+
-//                         "\n _**“gst no for kshetra”**_ "+
-//                         "\n _**“extension for kshetra”**_ "+
-//                         "\n _**“all document for kshetra”**_ "              
-
-//                     },
-                    
-//                 ]
-//             }
-//             }
-//                 var msg = new builder.Message()
-//                 .addAttachment(card)
-//                 session.send(msg);
-//         session.send("You have stopped current conversation! that is okay, just ping me when you are ready and we can chat again.")              
-//        // session.send('I am sorry I did not understand your question. Please retry the query or you may startover by clicking the start over button');        
-//         session.endDialog();
-//     }
-
-// ]).triggerAction({
-//     matches: 'Vendor.Cancel'
-// })
-
+]);
 //no intent and entity Dialog
 bot.dialog('NoneDialog',[
     function (session, args, next) {
