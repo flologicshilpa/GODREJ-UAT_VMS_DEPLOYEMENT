@@ -2179,7 +2179,7 @@ bot.dialog('askForPendingorDetailsRequest', [
 //adaptive card for vendor details
 function getCardsAttachmentsForVendorName(session,abc) {
 
-    var statusimage = getstatusURL(session,abc);
+    var statusimage = getstatusURL(session,abc[0].STATUS);
     
     var card = {
             'contentType': 'application/vnd.microsoft.card.adaptive',
