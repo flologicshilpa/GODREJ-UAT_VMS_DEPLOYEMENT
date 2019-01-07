@@ -2,6 +2,30 @@
 const builder = require('botbuilder');
 
 
+//for cosmos db
+
+const CosmosClient = require('@azure/cosmos').CosmosClient;
+const config = require('./config');
+//const url = require('url');
+const endpoint = config.endpoint;
+const masterKey = config.primaryKey;
+const client = new CosmosClient({ endpoint: endpoint, auth: { masterKey: masterKey } });
+
+
+var HttpStatusCodes = { NOTFOUND: 404 };
+var databaseId = config.database.id;
+var containerId = config.container.id;
+
+var BotID;
+var BotName;
+var UserId;
+var UserName;
+var ConversationId;
+var UserQuery;
+var UserResponse;
+
+
+
 //qna maker
 //var QnAClient = require('../lib/client');
 var QnAClient = require('./lib/client');
@@ -27,9 +51,7 @@ var Request = require("request");
 //common variable
 var i,intent="",entity,gstentity,panentity;
 var auth;
-var id;
-var token1;
-var name;
+
 
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
@@ -56,16 +78,13 @@ var conversationid="conversationid";
  var documentDbOptions = {
      host: 'https://gplflologiccosmosdbuat.documents.azure.com:443/', 
      masterKey: 'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==', 
-    database: 'botdocs',   
-    collection: 'botdata'
+     database: 'botdocs',   
+     collection: 'botdata'
  };
 
 var docDbClient = new azure.DocumentDbClient(documentDbOptions);
 
 var cosmosStorage = new azure.AzureBotStorage({ gzipData: false }, docDbClient);
-
-
-
 
 
 //universal bot connection
@@ -75,6 +94,8 @@ const  bot = module.exports =  new builder.UniversalBot(connector, function (ses
 
  }).set('storage', cosmosStorage); 
 
+ bot.set('persistUserData', true);
+ bot.set('persistConversationData', true);
 
 //LUIS Connection
 const LuisModelUrl1 = process.env.LuisModelUrl || process.env.baseUrl; //'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/78c89f64-d5c0-4def-91fb-8e453e5c3178?subscription-key=1cf14806be4141c683bceffbec7d01b3&verbose=true';
@@ -84,77 +105,55 @@ var recognizer = new builder.LuisRecognizer(LuisModelUrl1);
 bot.recognizer(recognizer);
 
 
-const createEvent = (eventName, value, address) => {
-    var msg = new builder.Message().address(address);
-    msg.data.type = "event";
-    msg.data.name = eventName;
-    msg.data.value = value;
-    return msg;
-}
-
-
-
 bot.on("event",function(event) {
-    console.log("message",event);
+    //console.log("message",event);
     var msg = new builder.Message().address(event.address);
     var address=event.address;
     msg.data.textLocale = "en-us";
     if (event.name === "btnRefresh") {
-        msg.data.text = "I see that you clicked a button.";
-      
-       
-        //session.beginDialog('GreetingDialog');  
+        msg.data.text = "I see that you clicked a button.";      
     }
-    //bot.send(msg);
-    bot.beginDialog(address,'endConversationDialog');
-   
-    // bot.beginDialog(msg,'/GreetingDialog');
-    // bot.beginDialog(message.from.address, '/GreetingDialog');
+    bot.beginDialog(address,'endConversationDialog');   
 })
 
-
-
-
-// bot.on("event", function (event) {
-//     var msg = new builder.Message().address(event.address);
-//     if (event.name === "customEvent") {
-//         // HOW CAN I STORE event.value IN session.userData ? 
-//       //  console.log(event.value);
-//         session.send("%s",event.value)
-//     }
-// });
-
-
-//for small talk
 
 
 //greeting dialog
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
+       
+       var name=session.message.user.name;
+       var id=session.message.user.id;
+       var token1 = session.message.user.token;
+
+       auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");  
      
-        name=session.message.user.name;
-        id=session.message.user.id;
-        token1 = session.message.user.token;
-        auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
-        
-        intent = args.intent;
-
-
-     //   var myDate = new Date();
-      //  var hrs = myDate.getHours();
-    
-//         var greet;
-    
-//         if (hrs < 12)
-//             greet = 'Good Morning';
-//         else if (hrs >= 12 && hrs <= 17)
-//             greet = 'Good Afternoon';
-//         else if (hrs >= 17 && hrs <= 24)
-//             greet = 'Good Evening';
-
         session.conversationData[GlobalADID]=id;        
-        session.conversationData[GloabalIntent] = intent.intent;       
+        //session.conversationData[GloabalIntent] = intent.intent;       
         session.send('Hello  %s! Welcome to Vendor Bot.',name);
+        
+        
+        //data for CosmosDbStorage
+        var jsonData = JSON.stringify(session.message);
+        var jsonParse = JSON.parse(jsonData);
+      
+        session.conversationData.botID=jsonParse.address.bot.id;
+        session.conversationData.botName=jsonParse.address.bot.name;
+        session.conversationData.userName=name;
+        session.conversationData.userID=id;
+        session.conversationData.conversationID=jsonParse.address.conversation.id;
+       
+        
+        BotID=session.conversationData.botID;
+        BotName=jsonParse.address.bot.name;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+      
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"Conversation Start...");      
+       
 
    var card = {  
        
@@ -191,37 +190,60 @@ bot.dialog('GreetingDialog',[
         .addAttachment(card)
         session.send(msg);
 
-        session.send('How may I help you?');    
-       // session.send("%s",username1)    
+        session.send('How may I help you?');  
+        
+        // session.send("%s",username1)    
         session.endDialog();
     }
 ]).triggerAction({
     matches: 'Vendor.Greeting'
 })
 
+
 //end Conversation Dialog
 bot.dialog('endConversationDialog',[
     function (session, args, next) {
+
+       
+          //for cosmos db store data
+        BotID=session.conversationData.botID;
+        BotName= session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"Conversation End..");
+      //end cosmos db 
+
         session.conversationData = {};
 
         var name=session.message.user.name;
         var id=session.message.user.id;
         var token1 = session.message.user.token;
-        auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");
-      //  intent = args.intent;       
-        
-        session.conversationData[GlobalADID]=id;
-        
-      //  session.conversationData[GloabalIntent] = intent.intent;       
+        auth = "Basic " + new Buffer(id + ":" + token1).toString("base64");       
+        session.conversationData[GlobalADID]=id;           
         session.send("You have stopped current conversation! that is okay, just ping me when you are ready and we can chat again.")              
-       // session.send('I am sorry I did not understand your question. Please retry the query or you may startover by clicking the start over button');        
         session.endDialog();
-    }
+    }]);
 
-]);
+
 //no intent and entity Dialog
 bot.dialog('NoneDialog',[
     function (session, args, next) {
+
+       intent = args.intent;            
+       session.conversationData[GloabalIntent] = intent.intent;
+         //for cosmos db store data
+       BotID=session.conversationData.botID;
+       BotName= session.conversationData.botName;
+       UserName= session.conversationData.userName;
+       UserId=session.conversationData.userID;
+       ConversationId=session.conversationData.conversationID;
+                
+     // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+     //end cosmos db 
         session.send('Please narrow your search.');        
         session.endDialog();
     }
@@ -236,10 +258,8 @@ var str3="";
 //Vendor all details Dialog
 bot.dialog('AllDetailsDialog',[
     function (session, args, next) {
-       
-        session.conversationData[conversationid]=session.conversationData.id;
-        session.conversationData[userquestion]=session.message.text;
 
+      
        //name not present in query
         if(args.Entity==true)
         {                
@@ -261,7 +281,20 @@ bot.dialog('AllDetailsDialog',[
                 session.conversationData[GlobalVendorName]="";
                 session.conversationData[GlobalPanGSTCode]="";
              }
-        }                 
+        } 
+        
+        BotID=session.conversationData.botID;
+        BotName= session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+      
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      
+
+
         if(session.conversationData[Gloabalentity])
         {
             panentity = builder.EntityRecognizer.findEntity(intent.entities,'pan-code');
@@ -454,7 +487,7 @@ bot.dialog('AllDetailsDialog',[
             session.endDialog(); 
            }
         
-        }  
+        } 
     },
     //Get Data for selected name
       function (session, results) { 
@@ -509,6 +542,17 @@ bot.dialog('AllDetailsDialog',[
 bot.dialog('GSTandPAN_NoDialog',[
     function (session, args, next) {
 
+
+        BotID=session.conversationData.botID;
+        BotName=session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+      
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+
         if(args.Entity==true)
         {                
         }
@@ -525,6 +569,10 @@ bot.dialog('GSTandPAN_NoDialog',[
                 {
                     session.conversationData[Gloabalentity1] ="PanNo";
                 }
+                // else if(builder.EntityRecognizer.findEntity(intent.entities,'CST_Certificate'))
+                // {
+                //     session.conversationData[Gloabalentity1] ="CST_Certificate";
+                // }
                 else if(builder.EntityRecognizer.findEntity(intent.entities,'Cancelled_Cheque'))
                 {
                     session.conversationData[Gloabalentity1] ="Cancelled_Cheque";
@@ -565,10 +613,6 @@ bot.dialog('GSTandPAN_NoDialog',[
                 session.conversationData[GlobalVendorName]="";
              }
         }     
-
-
-
-
        
     if(session.conversationData[Gloabalentity])
     {
@@ -648,7 +692,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                 } 
                 else
                 {
-                    session.send("No queried data available for : %s",session.conversationData[GlobalVendorName]);
+                    session.send("Data not available for vendor : %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
             }
@@ -701,7 +745,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                      session.endDialog(); 
                  }
                  else{
-                     session.send("Document not attached");
+                     session.send("Document not attach");
                      session.endDialog(); 
                  }
 
@@ -806,6 +850,7 @@ bot.dialog('GSTandPAN_NoDialog',[
 bot.dialog('ExtensionDialog',[
     function (session, args, next) {
 
+       
        if(args.Entity==true)
        {                
        }
@@ -827,9 +872,18 @@ bot.dialog('ExtensionDialog',[
             }
        }  
 
+       BotID=session.conversationData.botID;
+       BotName= session.conversationData.botName;
+       UserName= session.conversationData.userName;
+       UserId=session.conversationData.userID;
+       ConversationId=session.conversationData.conversationID;
+                
+     // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+     
+       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
 
-       
-        //Get Data From Web Api
+
+       //Get Data From Web Api
         if(session.conversationData[Gloabalentity])
         {
             //var Request = require("request");
@@ -994,10 +1048,7 @@ bot.dialog('ExtensionDialog',[
 bot.dialog('AllDocumentDialog',[
     function (session, args, next) {
 
-        //setintent
-       // intent = args.intent;
-        //session.conversationData[GloabalIntent] = intent.intent;    
-        //entity = builder.EntityRecognizer.findEntity(intent.entities, 'Name');
+
        if(args.Entity==true)
        {                
        }
@@ -1019,6 +1070,17 @@ bot.dialog('AllDocumentDialog',[
             }
        }  
 
+
+       //for cosmos db store data
+       BotID=session.conversationData.botID;
+       BotName= session.conversationData.botName;
+       UserName= session.conversationData.userName;
+       UserId=session.conversationData.userID;
+       ConversationId=session.conversationData.conversationID;
+                
+     // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+     //end cosmos db 
        
         //Get Data From Web Api
         if(session.conversationData[Gloabalentity])
@@ -1239,10 +1301,20 @@ bot.dialog('AllDocumentDialog',[
 bot.dialog('MaterialDialog',[
     function (session, args, next) {
 
+       
         intent = args.intent;
         session.conversationData[GloabalIntent] = intent.intent;    
        
-       
+        //for cosmos db store data
+        BotID=session.conversationData.botID;
+        BotName= session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      //end cosmos db 
 
   //Get Data From Web Api
     if(builder.EntityRecognizer.findEntity(intent.entities,'Code'))
@@ -1407,10 +1479,22 @@ bot.dialog('MaterialDialog',[
 bot.dialog('ServiceDialog',[
     function (session, args, next) {
 
-        intent = args.intent;
-        session.conversationData[GloabalIntent] = intent.intent;    
+
        
+    intent = args.intent;
+    session.conversationData[GloabalIntent] = intent.intent;    
        
+        //for cosmos db store data
+        BotID=session.conversationData.botID;
+        BotName= session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                 
+      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      //end cosmos db 
+
 
   //Get Data From Web Api
     if(builder.EntityRecognizer.findEntity(intent.entities,'Code'))
@@ -1540,8 +1624,25 @@ bot.dialog('ServiceDialog',[
 bot.dialog('RequestDetailsDialog',[
     function (session, args, next) {
 
+       
+
         intent = args.intent;
         session.conversationData[GloabalIntent] = intent.intent;   
+
+        //for cosmos db store data
+        BotID=session.conversationData.botID;
+        BotName= session.conversationData.botName;
+        UserName= session.conversationData.userName;
+        UserId=session.conversationData.userID;
+        ConversationId=session.conversationData.conversationID;
+                
+        // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+        //end cosmos db 
+
+
+
+
         if(builder.EntityRecognizer.findEntity(intent.entities,'Name')) 
         {
         entity = builder.EntityRecognizer.findEntity(intent.entities,'Name');
@@ -2179,7 +2280,7 @@ bot.dialog('askForPendingorDetailsRequest', [
 //adaptive card for vendor details
 function getCardsAttachmentsForVendorName(session,abc) {
 
-    var statusimage = getstatusURL(session,abc[0].STATUS);
+    var statusimage = getstatusURL(session,abc);
     
     var card = {
             'contentType': 'application/vnd.microsoft.card.adaptive',
@@ -2511,67 +2612,6 @@ function getCardsAttachmentsForExtensionList(session,abc)
 }
 
 //adaptive card for material extension attachment
-function getCardsAttachmentsForMaterialextension(session,abc)
-{  
-        var attachments=[];
-        var j,i;
-        var extensionlist="";
-        for(i=0;i<abc.length;i++)
-        {                    
-            for(j=0;j<abc[i].EXTENSION_LIST.length;j++)
-            {
-                if(abc[i].EXTENSION_LIST[j].PLANT != undefined || abc[i].EXTENSION_LIST[j].PLANT !=null || abc[i].EXTENSION_LIST[j].PLANT !="")
-                {
-                     extensionlist = extensionlist + "," + abc[i].EXTENSION_LIST[j].PLANT ;
-                }
-            }
-
-            if(extensionlist!="")
-            {
-                var card = {
-                             "contentType": "application/vnd.microsoft.card.adaptive",
-                             "content": {
-                             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                             "type": "AdaptiveCard",
-                             "version": "1.0",
-                             "body": [{                                          
-                                        "type": "Container",
-                                        "items": [{
-                                                "type":"TextBlock",
-                                                "text":'Extension for material code : ' + abc[i].MATERIAL_NUMBER,                                               
-                                                "color":"red",
-                                                "weight":"bolder",
-                                                "size": "medium"}]
-                                    },
-                                    {
-                                        "type": "Container",
-                                        "separator": true,
-                                        "items":[{                                            
-                                                "type": "ColumnSet",
-                                                "columns": [{
-                                                        "type": "Column",
-                                                        "width": 3,
-                                                        "items": [{'type': 'TextBlock','text': 'Plant Name :','weight': 'bolder'}]
-                                                    },
-                                                    {
-                                                        "type": "Column",
-                                                        "width":7,
-                                                        "items": [{'type': 'TextBlock','text':extensionlist}]
-                                                    }]
-                                                }]
-                                    }
-                                    ]//body close 
-                                    }//content
-                                }//card
-                                attachments.push(card);       
-                    }
-                                
-            }//for loop
-         
-        return attachments;
-}
-
-//adaptive card for MaterialDetails
 function getCardsAttachmentsForMaterialDetails(session,abc)
 {  
         var attachments=[];
@@ -2857,6 +2897,9 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
 
         return attachments;
 }
+
+
+
 //adaptive card for ServiceDetails
 function getCardsAttachmentsForServiceDetails(session,abc)
 {  
@@ -3401,4 +3444,30 @@ function getstatusURL(session,status)
     }
     return url;
 }
+
+
+function createFamilyItem(BotId,BotName,ConversationId,UserId,UserName,UserQuery,UserResponse)  {
+    var date = new Date;
+        // "currentDate":start.toISOString()
+        var datetime = new Date().getTime();
+    var createdid = BotName + "|"+ UserId + "|" + datetime;
+    console.log("createdid",createdid);
+    var documentDefinition = {"id":createdid,
+      "data": { 
+        "BotId":BotId,
+        "ConversationId":ConversationId,
+        "UserID": UserId,
+        "UserName": UserName,
+        "UserQuery":UserQuery,
+        "UserResponse":UserResponse
+   }};
+   try {
+     var { item } =  client.database(databaseId).container(containerId).items.create(documentDefinition);
+           console.log(`Created family item with id:\n${documentDefinition.id}\n`);      
+   }
+   catch (error) {
+     console.log('Somthing getting worng',error);     
+   }
+  };
+
 
