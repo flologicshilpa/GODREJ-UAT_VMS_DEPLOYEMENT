@@ -2616,12 +2616,12 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
 {  
         var attachments=[];
         var i,j;
-        var extensionlist="";
+        
        var statusimage;
 
         for(i=0;i<abc.length;i++)
         {
-            
+            var extensionlist="";
             //loop for find extension list 
             for(j=0;j<abc[i].EXTENSION_LIST.length;j++)
             {
