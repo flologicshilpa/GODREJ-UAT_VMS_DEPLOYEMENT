@@ -2752,7 +2752,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                     "items": [
                                             {
                                                         "type": "TextBlock",
-                                                        "text": abc[i].HSN_DESCRIPTION,
+                                                        "text": abc[i].HSN_DESCRIPTION.toUpperCase(),
                                             }]
                                 }]
                         },
@@ -2798,7 +2798,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                     "items": [
                                             {
                                                         "type": "TextBlock",
-                                                        "text": abc[i].MATERIAL_TYPE,
+                                                        "text": abc[i].MATERIAL_TYPE.toUpperCase(),
                                             }]
                                 }]
                         },
