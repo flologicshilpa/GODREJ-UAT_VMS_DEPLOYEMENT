@@ -2654,13 +2654,13 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                                     "type": "TextBlock",
                                                     "size": "Medium",
                                                     "weight": "Bolder",
-                                                    "text": abc[0].MATERIAL_DESCRIPTION,
+                                                    "text": abc[i].MATERIAL_DESCRIPTION,
                                                     "wrap": true
                                                 },
                                                 {
                                                     "type": "TextBlock",
                                                     "spacing": "None",
-                                                    "text": abc[0].MATERIAL_NUMBER,
+                                                    "text": abc[i].MATERIAL_NUMBER,
                                                     "isSubtle": true,
                                                     "wrap": true
                                                 }
