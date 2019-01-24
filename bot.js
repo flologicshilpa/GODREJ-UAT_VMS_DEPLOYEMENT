@@ -3448,7 +3448,7 @@ function getstatusURL(session,status)
 
 
 function createFamilyItem(BotId,BotName,ConversationId,UserId,UserName,UserQuery,UserResponse)  {
-   var date = new Date();
+   var date = new Date;
    // var currentdate=date.toString("yyyy/MM/dd");
     // "currentDate":date.toISOString()
      //var datetime = new Date().getTime();
@@ -3461,7 +3461,7 @@ function createFamilyItem(BotId,BotName,ConversationId,UserId,UserName,UserQuery
         "UserName": UserName,
         "UserQuery":UserQuery,
         "UserResponse":UserResponse,
-        "LoginDate":date
+        "LoginDate":date.toISOString()
    };
    try {
      var { item } =  client.database(databaseId).container(containerId).items.create(documentDefinition);
