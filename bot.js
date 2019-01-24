@@ -3460,7 +3460,7 @@ function createFamilyItem(BotId,BotName,ConversationId,UserId,UserName,UserQuery
         "UserName": UserName,
         "UserQuery":UserQuery,
         "UserResponse":UserResponse,
-        "Date":date
+        "Date":date.toDateString()
    };
    try {
      var { item } =  client.database(databaseId).container(containerId).items.create(documentDefinition);
