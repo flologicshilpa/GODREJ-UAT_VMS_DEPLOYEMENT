@@ -151,7 +151,7 @@ bot.dialog('GreetingDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-        ChannelID=session.ConversationData.channelid;   
+        ChannelID=session.conversationData.channelid;   
         session.send("%s",ChannelID);
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
