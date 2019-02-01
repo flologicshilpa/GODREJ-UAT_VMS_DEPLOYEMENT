@@ -8,7 +8,7 @@ config.database = {
 };
 
 config.container = {
-  "id": "botdata"
+  "id": "VendorData"
 };
 
 config.items = {
