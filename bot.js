@@ -23,6 +23,7 @@ var UserName;
 var ConversationId;
 var UserQuery;
 var UserResponse;
+var ChannelID;
 
 
 
@@ -142,6 +143,7 @@ bot.dialog('GreetingDialog',[
         session.conversationData.userName=name;
         session.conversationData.userID=id;
         session.conversationData.conversationID=jsonParse.address.conversation.id;
+        session.ConversationData.ChannelId=jsonParse.address.channelId;
        
         
         BotID=session.conversationData.botID;
@@ -149,7 +151,8 @@ bot.dialog('GreetingDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                 
+        ChannelID=session.ConversationData.ChannelId;   
+        session.send("%s",ChannelID);
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
         createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"Conversation Start...");      
@@ -240,7 +243,7 @@ bot.dialog('NoneDialog',[
        UserName= session.conversationData.userName;
        UserId=session.conversationData.userID;
        ConversationId=session.conversationData.conversationID;
-                
+              
      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
      //end cosmos db 
@@ -288,7 +291,7 @@ bot.dialog('AllDetailsDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                 
+            
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
         createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
