@@ -143,7 +143,7 @@ bot.dialog('GreetingDialog',[
         session.conversationData.userName=name;
         session.conversationData.userID=id;
         session.conversationData.conversationID=jsonParse.address.conversation.id;
-        session.ConversationData.ChannelId=jsonParse.address.channelId;
+        session.ConversationData.channelid=jsonParse.address.channelId;
        
         
         BotID=session.conversationData.botID;
@@ -151,7 +151,7 @@ bot.dialog('GreetingDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-        ChannelID=session.ConversationData.ChannelId;   
+        ChannelID=session.ConversationData.channelid;   
         session.send("%s",ChannelID);
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
