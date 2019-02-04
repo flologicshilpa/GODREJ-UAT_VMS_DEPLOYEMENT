@@ -123,6 +123,10 @@ bot.on("event",function(event) {
 bot.dialog('GreetingDialog',[
     function (session, args, next) {
        
+        session.sendTyping();
+        setTimeout(function () {           
+        },1000);
+
        var name=session.message.user.name;
        var id=session.message.user.id;
        var token1 = session.message.user.token;
@@ -206,7 +210,9 @@ bot.dialog('GreetingDialog',[
 //end Conversation Dialog
 bot.dialog('endConversationDialog',[
     function (session, args, next) {
-
+ session.sendTyping();
+        setTimeout(function () {           
+        },1000);
        
           //for cosmos db store data
         BotID=session.conversationData.botID;
@@ -262,7 +268,10 @@ var str3="";
 bot.dialog('AllDetailsDialog',[
     function (session, args, next) {
 
-      
+       session.sendTyping();
+        setTimeout(function () {           
+        },1000);
+
        //name not present in query
         if(args.Entity==true)
         {                
@@ -545,6 +554,9 @@ bot.dialog('AllDetailsDialog',[
 bot.dialog('GSTandPAN_NoDialog',[
     function (session, args, next) {
 
+        session.sendTyping();
+        setTimeout(function () {           
+        },1000);
 
         BotID=session.conversationData.botID;
         BotName=session.conversationData.botName;
@@ -853,7 +865,10 @@ bot.dialog('GSTandPAN_NoDialog',[
 bot.dialog('ExtensionDialog',[
     function (session, args, next) {
 
-       
+        session.sendTyping();
+        setTimeout(function () {           
+        },1000);
+
        if(args.Entity==true)
        {                
        }
@@ -1051,7 +1066,9 @@ bot.dialog('ExtensionDialog',[
 bot.dialog('AllDocumentDialog',[
     function (session, args, next) {
 
-
+ session.sendTyping();
+        setTimeout(function () {           
+        },1000);
        if(args.Entity==true)
        {                
        }
@@ -1303,7 +1320,9 @@ bot.dialog('AllDocumentDialog',[
 //Material Dialog
 bot.dialog('MaterialDialog',[
     function (session, args, next) {
-
+ session.sendTyping();
+        setTimeout(function () {           
+        },1000);
        
         intent = args.intent;
         session.conversationData[GloabalIntent] = intent.intent;    
@@ -1482,7 +1501,9 @@ bot.dialog('MaterialDialog',[
 bot.dialog('ServiceDialog',[
     function (session, args, next) {
 
-
+ session.sendTyping();
+        setTimeout(function () {           
+        },1000);
        
     intent = args.intent;
     session.conversationData[GloabalIntent] = intent.intent;    
@@ -1626,7 +1647,9 @@ bot.dialog('ServiceDialog',[
 //request details bot
 bot.dialog('RequestDetailsDialog',[
     function (session, args, next) {
-
+ session.sendTyping();
+        setTimeout(function () {           
+        },1000);
        
 
         intent = args.intent;
