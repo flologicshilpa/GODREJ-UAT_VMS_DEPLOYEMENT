@@ -1134,7 +1134,7 @@ bot.dialog('AllDocumentDialog',[
                                 .title(filename)
                                 .images([builder.CardImage.create(session, getfileextimage)]) //http://118.67.249.4:85/GPL-Portal/AttachDocument/
                                 .buttons([
-                                    builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
+                                    builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
                                 ])
             
                                 attachments.push(card);                                    
@@ -1210,7 +1210,7 @@ bot.dialog('AllDocumentDialog',[
                                      .title(filename)                                    
                                      .images([builder.CardImage.create(session, getfileextimage)])
                                      .buttons([
-                                         builder.CardAction.openUrl(session,'https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=', 'Open Attachment')
+                                         builder.CardAction.openUrl(session,'https://vrm.godrejproperties.com:20080/VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=', 'Open Attachment')
                                      ])
                  
                                      attachments.push(card);                                    
@@ -1277,7 +1277,7 @@ bot.dialog('AllDocumentDialog',[
                         .title(filename)
                         .images([builder.CardImage.create(session, getfileextimage)])
                         .buttons([
-                            builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
+                            builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
                         ])
     
                          attachments.push(card);                                    
