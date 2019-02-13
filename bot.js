@@ -3456,13 +3456,14 @@ function createFamilyItem(BotId,BotName,ConversationId,UserId,UserName,UserQuery
   // var date = new Date();
    // var currentdate=date.toString("yyyy/MM/dd");
    // var n = date.getDate();
+    var botname = "VendorBot";
     var datetime = new Date().getTime();
    // var currentDate = date.toISOString;
     var createdid = BotName + "|"+ UserId + "|" + datetime;
    var channelid="directline";
     var documentDefinition = {"id":createdid, 
         "ChannelID":channelid,
-        "BotId":BotId,
+        "BotId":botname,
         "ConversationId":ConversationId,
         "UserID": UserId,
         "UserName": UserName,
