@@ -2670,7 +2670,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                                     "wrap": true
                                                 }
                                             ],
-                                            "width": 7
+                                            "width": 5
                                         },
                                         {
                                             "type": "Column",
@@ -2682,7 +2682,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                                     "size": "small"
                                                 }
                                             ],
-                                            "width": 3
+                                            "width": 4
                                         },
     
                                     ] }
