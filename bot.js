@@ -2657,6 +2657,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                             "items": [
                                                 {
                                                     "type": "TextBlock",
+                                                    "spacing": "None",
                                                     "size": "Medium",
                                                     "weight": "Bolder",
                                                     "text": abc[i].MATERIAL_DESCRIPTION,
@@ -2670,7 +2671,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                                     "wrap": true
                                                 }
                                             ],
-                                            "width": 5
+                                            "width": 8
                                         },
                                         {
                                             "type": "Column",
@@ -2682,7 +2683,7 @@ function getCardsAttachmentsForMaterialDetails(session,abc)
                                                     "size": "small"
                                                 }
                                             ],
-                                            "width": 4
+                                            "width": 2
                                         },
     
                                     ] }
