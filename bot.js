@@ -673,7 +673,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                                  session.endDialog();
                              }
                              else{
-                                 session.send("Document not attach");
+                                 session.send("Document not attached");
                                  session.endDialog();
                              }
                         }
@@ -752,7 +752,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                      session.endDialog(); 
                  }
                  else{
-                     session.send("Document not attach");
+                     session.send("Document not attached");
                      session.endDialog(); 
                  }
 
@@ -829,7 +829,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                                 session.endDialogWithResult(results); 
                             }
                             else{
-                                session.send("Document not attach");
+                                session.send("Document not attached");
                                 session.endDialog(); 
                             }
 
