@@ -80,7 +80,7 @@ var conversationid="conversationid";
      host: 'https://gplflologiccosmosdbuat.documents.azure.com:443/', 
      masterKey: 'dmlyKuqhXlLQto7bY8tsZLJpM11Iq3x9FSKfllqZisN55YMrg18FfBJ6jh2u7JXWxAsnm44Um9iTijn4Geq77A==', 
      database: 'botdocs',   
-     collection: 'botdata'
+     collection: 'VendorData'
  };
 
 var docDbClient = new azure.DocumentDbClient(documentDbOptions);
