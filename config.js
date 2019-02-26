@@ -8,7 +8,7 @@ config.database = {
 };
 
 config.container = {
-  "id": "VRMUATCollection"
+  "id": "VRMProductionCollection"
 };
 
 config.items = {
