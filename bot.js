@@ -161,7 +161,7 @@ bot.dialog('GreetingDialog',[
        // session.send("%s",ChannelID);
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"Conversation Start...");      
+       // createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"Conversation Start...");      
        
 
    var card = {  
