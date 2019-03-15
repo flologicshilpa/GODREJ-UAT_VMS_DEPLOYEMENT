@@ -489,7 +489,7 @@ bot.dialog('AllDetailsDialog',[
             //session.conversationData[GloabalIntent]="Vendor.AllDetails";               
             //session.beginDialog('askForVendorName');  
             var msgfornodata = new builder.Message();    
-            msgfornodata.text("It looks like you are looking for “Vendor details” but you didn't mention _vendor name, gst or pan_.\n You may ask things like “vendor details for _ABC Ltd_” or “vendor details for _ABCPX0000G_” ");        
+            msgfornodata.text("It looks like you are looking for “Vendor details” but you did not mention _vendor name, gst or pan_.\n You may ask things like “vendor details for _ABC Ltd_” or “vendor details for _ABCPX0000G_” ");        
             session.send(msgfornodata);
             session.endDialog(); 
            }
@@ -771,7 +771,7 @@ bot.dialog('GSTandPAN_NoDialog',[
             //session.conversationData[GloabalIntent]="Vendor.Number";               
            // session.beginDialog('askForVendorName'); 
            var msgfornodata = new builder.Message();    
-            msgfornodata.text("It looks like you are looking for “pan no” or “gst no” but you didn't mention _vendor name.\n You may ask things like “pan no for _ABC Ltd_” or “gst no for _ABC Ltd_” ");        
+            msgfornodata.text("It looks like you are looking for “pan no” or “gst no” but you did not mention _vendor name.\n You may ask things like “pan no for _ABC Ltd_” or “gst no for _ABC Ltd_” ");        
             session.send(msgfornodata);
           // session.send("It looks like you are looking for vendor details but you didn't mention vendor name, gst or pan. You may ask things like vendor details for ABC Ltd or vendor details for ABCPX0000G");           
            session.endDialog();  
@@ -999,7 +999,7 @@ bot.dialog('ExtensionDialog',[
             //    session.conversationData[GloabalIntent]="Vendor.Extensions";               
             //    session.beginDialog('askForVendorName');  
                 var msgfornodata = new builder.Message();    
-                msgfornodata.text("It looks like you are looking for “extensions” or “associations” but you didn't mention _vendor name_.\n You may ask things like “extension for _ABC Ltd_” or “association for _ABC Ltd_” ");        
+                msgfornodata.text("It looks like you are looking for “extensions” or “associations” but you did not mention _vendor name_.\n You may ask things like “extension for _ABC Ltd_” or “association for _ABC Ltd_” ");        
                 session.send(msgfornodata);           
                 session.endDialog();  
             }
@@ -1230,7 +1230,7 @@ bot.dialog('AllDocumentDialog',[
             else 
             {
                 var msgfornodata = new builder.Message();    
-                msgfornodata.text("It looks like you are looking for “All document” or “document” but you didn't mention _vendor name_.\n You may ask things like “All documents for _ABC Ltd_” or “documents for _ABC Ltd_” ");        
+                msgfornodata.text("It looks like you are looking for “All document” or “document” but you did not mention _vendor name_.\n You may ask things like “All documents for _ABC Ltd_” or “documents for _ABC Ltd_” ");        
                 session.send(msgfornodata);   
                 // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
                 session.endDialog(); 
@@ -1469,7 +1469,7 @@ bot.dialog('MaterialDialog',[
       else 
       {
         var msgfornodata = new builder.Message();    
-        msgfornodata.text("It looks like you are looking for “Material Details” or but you didn't mention _material name_ or _material code_.\n You may ask things like “material details for _GRASS CARPET_” or “material details for _200131_” ");        
+        msgfornodata.text("It looks like you are looking for “Material Details” or but you did not mention _material name_ or _material code_.\n You may ask things like “material details for _GRASS CARPET_” or “material details for _200131_” ");        
         session.send(msgfornodata);   
         // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
         session.endDialog(); 
@@ -1613,7 +1613,7 @@ bot.dialog('ServiceDialog',[
       else 
       {
         var msgfornodata = new builder.Message();    
-        msgfornodata.text("It looks like you are looking for “Service Details” or but you didn't mention _service name_ or _service code_.\n You may ask things like “service details for _Fuel Charges_” or “service details for _3001655_” ");        
+        msgfornodata.text("It looks like you are looking for “Service Details” or but you did not mention _service name_ or _service code_.\n You may ask things like “service details for _Fuel Charges_” or “service details for _3001655_” ");        
         session.send(msgfornodata);   
         // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
         session.endDialog(); 
