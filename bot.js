@@ -450,7 +450,7 @@ bot.dialog('AllDetailsDialog',[
                         //no record found  
                         else
                         {
-                                session.send("No queried data found for : %s",session.conversationData[GlobalVendorName]);
+                                session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                         }            
                     }                            
                 });   
@@ -699,7 +699,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                 } 
                 else
                 {
-                    session.send("Data not available for vendor : %s",session.conversationData[GlobalVendorName]);
+                    session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
             }
@@ -759,7 +759,7 @@ bot.dialog('GSTandPAN_NoDialog',[
 
                 }
                 else{
-                    session.send("No queried data available for: %s",session.conversationData[GlobalVendorName]);
+                    session.send("Information not exist for: %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
                
@@ -836,7 +836,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                         }    
                         else
                         {
-                            session.send("No queried data available for : %s",session.conversationData[GlobalVendorName]);
+                            session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                             session.endDialog();
                         }
                     }                        
@@ -1101,7 +1101,7 @@ bot.dialog('AllDocumentDialog',[
             process.env.global_vendor_name_apiurl  = process.env.ApiURLForVendorName + session.conversationData[GlobalVendorName];
             Request.get({ url : process.env.global_vendor_name_apiurl ,headers : { "Authorization" : auth}}, (error, response, body) => {
             if(error) {
-               session.send("Data not found");
+               session.send("Information not found");
             }
             else{
                 abc=JSON.parse(body);
@@ -1336,7 +1336,7 @@ bot.dialog('MaterialDialog',[
         process.env.global_Material_Details_apiurl  = process.env.ApiURLForMaterialDetails + session.conversationData[GlobalMaterialCode];
         Request.get({ url : process.env.global_Material_Details_apiurl ,headers : { "Authorization" : auth}}, (error, response, body) => {
         if(error) {
-            session.send("Data not found");
+            session.send("Information not found");
         }
         else{
             abc=JSON.parse(body);
@@ -1371,7 +1371,7 @@ bot.dialog('MaterialDialog',[
                     // session.endDialog();
                 }
                 else{
-                    session.send('Data not available for material code : %s',session.conversationData[GlobalMaterialCode]);
+                    session.send('Information not available for material code : %s',session.conversationData[GlobalMaterialCode]);
                     session.endDialog();
                 }
         }                                 
@@ -1388,7 +1388,7 @@ bot.dialog('MaterialDialog',[
         process.env.global_Material_Details_ByName  = process.env.ApiURLForMaterialDetailsbyMaterialName +"MATERIAL_NAME="+ session.conversationData[GlobalMaterialName] +"&MATERIAL_TYPE=''&MATERIAL_GROUP=''"; ;
         Request.get({ url : process.env.global_Material_Details_ByName ,headers : { "Authorization" : auth}}, (error, response, body) => {
         if(error) {
-            session.send("Data not found");
+            session.send("Information not found");
         }
         else{
             abc=JSON.parse(body);
@@ -1416,7 +1416,7 @@ bot.dialog('MaterialDialog',[
                   
                 }
                 else{
-                    session.send('Data Not Available for material Name : %s',session.conversationData[GlobalMaterialName]);
+                    session.send('Information Not Available for material Name : %s',session.conversationData[GlobalMaterialName]);
                     session.endDialog();
                 }
         }                                 
@@ -1428,7 +1428,7 @@ bot.dialog('MaterialDialog',[
         process.env.global_Material_Details_apiurl  = process.env.ApiURLForMaterialDetails + session.conversationData[GlobalMaterialCode];
         Request.get({ url : process.env.global_Material_Details_apiurl ,headers : { "Authorization" : auth}}, (error, response, body) => {
         if(error) {
-            session.send("Data not found");
+            session.send("Information not found");
         }
         else{
             abc=JSON.parse(body);
@@ -1458,7 +1458,7 @@ bot.dialog('MaterialDialog',[
 
             }  
             else{
-                session.send('Data Not Available for material code : %s',session.conversationData[GlobalMaterialCode]);
+                session.send('Information Not Available for material code : %s',session.conversationData[GlobalMaterialCode]);
                 session.endDialog();
             } 
         }
@@ -1759,7 +1759,7 @@ bot.dialog('RequestDetailsDialog',[
             Request.get({ url : process.env.global_Request_Details_ByADID_forPending ,headers : { "Authorization" : auth}}, (error, response, body) => {
         
                 if(error) {
-                    session.send("Data not found");
+                    session.send("Information not found");
                 }
                 else{
                     abc=JSON.parse(body);
@@ -1791,7 +1791,7 @@ bot.dialog('RequestDetailsDialog',[
            process.env.global_Request_Details_ByADID = process.env.ApiForRequestDetailsbyADID + session.conversationData[GlobalADID];
             Request.get({ url : process.env.global_Request_Details_ByADID ,headers : { "Authorization" : auth}}, (error, response, body) => {
             if(error) {
-                session.send("Data not found");
+                session.send("Information not found");
             }
             else{
                 abc=JSON.parse(body);
@@ -2114,7 +2114,7 @@ bot.dialog('askMoreAttribute', [
                 }
                 else
                 {
-                    session.send("Data not found for material name : %s",result.response);
+                    session.send("Information not found for material name : %s",result.response);
                     session.endDialogWithResult(result);
                 }
                 }                                        
@@ -2162,7 +2162,7 @@ bot.dialog('askMoreAttributeForService', [
                             session.endDialogWithResult(result);
                 }
                 else{
-                    session.send("Data not found for service name : %s",result.response);
+                    session.send("Information not found for service name : %s",result.response);
                     session.endDialogWithResult(result);
                 }
                 }    
@@ -2211,7 +2211,7 @@ bot.dialog('askForPendingorDetailsRequest', [
                     Request.get({ url : process.env.global_Request_Details_ByADID_forPending ,headers : { "Authorization" : auth}}, (error, response, body) => {
                 
                             if(error) {
-                                session.send("Data not found");
+                                session.send("Information not found");
                             }
                             else{
                                 abc=JSON.parse(body);                       
