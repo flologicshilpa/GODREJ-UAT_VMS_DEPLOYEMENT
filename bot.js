@@ -1259,32 +1259,40 @@ bot.dialog('AllDocumentDialog',[
                 if(bodydata.length>0)
                 {
               //  var card;
-                var message;
-                var msg = new builder.Message(session);
-                msg.attachmentLayout(builder.AttachmentLayout.carousel);
-               
-                var attachments = [];
-                for(i=0; i<bodydata[0].DOCUMENT_LIST.length; i++)
-                {
-                     // create reply with Carousel AttachmentLayout
-                        var filename=bodydata[0].DOCUMENT_LIST[i].FILE_TYPE;
-                        var fileopen=bodydata[0].DOCUMENT_LIST[i].FILE_NAME;
-                        var getfileextimage;
-                        //get file extension
-                        getfileextimage = getfileextensionimage(fileopen,finaleqno);                
+                  if(bodydata[0].DOCUMENT_LIST.length > 0)
+                  {
+                        var message;
+                        var msg = new builder.Message(session);
+                        msg.attachmentLayout(builder.AttachmentLayout.carousel);
 
-                        var card = new builder.ThumbnailCard(session)
-                        .title(filename)
-                        .images([builder.CardImage.create(session, getfileextimage)])
-                        .buttons([
-                            builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
-                        ])
-    
-                         attachments.push(card);                                    
-               }
-               msg.attachments(attachments);
-               session.send(msg);
-               session.endDialogWithResult(results);
+                        var attachments = [];
+                        for(i=0; i<bodydata[0].DOCUMENT_LIST.length; i++)
+                        {
+                             // create reply with Carousel AttachmentLayout
+                                var filename=bodydata[0].DOCUMENT_LIST[i].FILE_TYPE;
+                                var fileopen=bodydata[0].DOCUMENT_LIST[i].FILE_NAME;
+                                var getfileextimage;
+                                //get file extension
+                                getfileextimage = getfileextensionimage(fileopen,finaleqno);                
+
+                                var card = new builder.ThumbnailCard(session)
+                                .title(filename)
+                                .images([builder.CardImage.create(session, getfileextimage)])
+                                .buttons([
+                                    builder.CardAction.openUrl(session, 'https://vrm.godrejproperties.com:20080/VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+fileopen+'&filetag=' , 'Open Attachment')
+                                ])
+
+                                 attachments.push(card);                                    
+                       }
+                       msg.attachments(attachments);
+                       session.send(msg);
+                       session.endDialogWithResult(results);
+                  }
+                    else
+                    {
+                         session.send("Documents not available for vendor : %s",session.conversationData[GlobalVendorName]);
+                          session.endDialog();
+                    }
 
             }
             else{
