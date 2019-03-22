@@ -2358,12 +2358,12 @@ function getCardsAttachmentsForVendorName(session,abc) {
                                             "type": "TextBlock",
                                             "size": "Medium",
                                             "weight": "Bolder",
-                                            "text": "PAN No:",
+                                            "text": "PAN:",
                                             
                                         },
                                        
                                     ],
-                                    "width": 2
+                                    "width": 1
                                 },
                                 {
                                     "type": "Column",
@@ -2384,12 +2384,12 @@ function getCardsAttachmentsForVendorName(session,abc) {
                                             "type": "TextBlock",
                                             "size": "Medium",
                                             "weight": "Bolder",
-                                            "text": "GST No:",
+                                            "text": "GST:",
                                            
                                         },
                                        
                                     ],
-                                    "width": 2
+                                    "width": 1
                                 },
                                 {
                                     "type": "Column",
@@ -2401,7 +2401,7 @@ function getCardsAttachmentsForVendorName(session,abc) {
                                           
                                         }
                                     ],
-                                    "width": 3
+                                    "width": 4
                                 },
 
 
