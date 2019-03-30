@@ -276,10 +276,14 @@ bot.dialog('AllDetailsDialog',[
              intent = args.intent;            
              session.conversationData[GloabalIntent] = intent.intent;
              entity = builder.EntityRecognizer.findEntity(intent.entities,'Name');
-
+             var entitynametest = builder.EntityRecognizer.findEntity(intent.entities,'Nametest');
              if(entity)
              {
                 session.conversationData[GlobalVendorName] = entity.entity;   
+                session.conversationData[Gloabalentity]="Name";
+             }
+             else if(entitynametest)
+             {
                 session.conversationData[Gloabalentity]="Name";
              }
              else
