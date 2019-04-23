@@ -53,7 +53,7 @@ var Request = require("request");
 var i,intent="",entity,gstentity,panentity;
 var auth;
 
-
+var UserQuestion="";
 //variable declaration for session
 var Gloabalentity1="Gloabalentity1";
 var Gloabalentity="Gloabalentity";
@@ -299,10 +299,10 @@ bot.dialog('AllDetailsDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-            
+        UserQuestion=session.message.text;   
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      //  createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
       
 
 
@@ -335,6 +335,8 @@ bot.dialog('AllDetailsDialog',[
                         //for single record
                         if(abc.length >= 1)
                         {
+                        
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);    
                         session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
                         var cards = getCardsAttachmentsForVendorName(session,abc);
                         var msg = new builder.Message(session)
@@ -344,7 +346,8 @@ bot.dialog('AllDetailsDialog',[
                         session.endDialog();
                         }
                         else{
-                            session.send("data not found");
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
+                            session.send("Information not found for given GST/PAN.");
                             session.conversationData[GlobalPanGSTCode]="";
                         }
                     }
@@ -369,6 +372,7 @@ bot.dialog('AllDetailsDialog',[
                         //for single record
                         if(abc.length == 1)
                         {
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
                         var cards=getCardsAttachmentsForVendorName(session,abc);
                         var msg = new builder.Message(session)
@@ -379,68 +383,12 @@ bot.dialog('AllDetailsDialog',[
                         //for more than one record found
                         else if(abc.length > 1) 
                         {  
-                           
-                            // str1 = abc[0].VENDOR_NAME;
-                            // str2 = abc[1].VENDOR_NAME;
-                            // str3 = abc[2].VENDOR_NAME;
-
-                            // var employees = {
-                            //     accounting: []
-                            // };
-                            
-                            // for(var i in abc) {    
-                            
-                            //     var item = abc[i];   
-                            
-                            //     str1=item.VENDOR_NAME;
-                            //     employees.accounting.push({ 
-                            //         str1  : item.REQUEST_NO                                    
-                            //     });
-                            // }
-                            
-
-
                             for (i = 0; i < abc.length; i++) 
                             {
                                 if(i <= 4)
-                                {
-                                   dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")");
-                                    
-                                    
-                                }
+                                { dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")"); }
 
-                                //choices = dic
                             }
-                           //  var test=JSON.stringify(choices);
-
-                            //  var namearray=[];
-                            //  namearray.push("vendorname"= abc[0].VENDOR_NAME);
-
-                            //  var employees = {
-                            //     namearray: []
-                            //     };
-
-                            //     employees.namearra.push({ 
-                            //         requestno:abc[0].REQUEST_NO                                    
-                            //             });
-
-                           //  salesData.push(str1:{ requestno:abc[0].REQUEST_NO })
-
-
-                            // session.send("%s",str1.ty);
-                            // salesData = {
-                            //  "str1": {
-                            //         requestno:abc[0].REQUEST_NO                              
-                            //     },
-                            //     str2: {
-                            //         requestno:abc[1].REQUEST_NO                              
-                            //     },
-                            //     str3: {
-                            //         requestno:abc[2].REQUEST_NO                              
-                            //     },
-                            // };
-                            
-                           // session.send("%s",JSON.stringify(dict));
                             if(abc.length > 4)
                             {
                                 session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
@@ -454,7 +402,8 @@ bot.dialog('AllDetailsDialog',[
                         //no record found  
                         else
                         {
-                                session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
+                            session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                         }            
                     }                            
                 });   
@@ -466,16 +415,14 @@ bot.dialog('AllDetailsDialog',[
            if(session.conversationData[GlobalRequestNo]) 
            {
             var abc;
-            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + session.conversationData[GlobalRequestNo];
-           
-        
-           
+            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + session.conversationData[GlobalRequestNo];  
             Request.get({ url : process.env.global_reqno_apiurl ,headers : { "Authorization" : auth}},(error, response, body) => {
                 if(error) {
                    session.send("Geting error");
                 }
                 else{
                 
+                 createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                  abc=JSON.parse(body);                                   
                  session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;   
                  var cards=getCardsAttachmentsForVendorName(session,abc);
@@ -490,8 +437,7 @@ bot.dialog('AllDetailsDialog',[
            //request no not maintain in session
            else 
            {
-            //session.conversationData[GloabalIntent]="Vendor.AllDetails";               
-            //session.beginDialog('askForVendorName');  
+            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
             var msgfornodata = new builder.Message();    
             msgfornodata.text("It looks like you are looking for “Vendor details” but you did not mention _vendor name, gst or pan_.\n You may ask things like “vendor details for _ABC Ltd_” or “vendor details for _ABCPX0000G_” ");        
             session.send(msgfornodata);
@@ -501,40 +447,28 @@ bot.dialog('AllDetailsDialog',[
         } 
     },
     //Get Data for selected name
-      function (session, results) { 
-          
+      function (session, results) {          
       var str=results.response.entity;
-          //session.send("%s",JSON.stringify(results));    
-          
-        //   var region = salesData[results.response.entity];
-        //   session.send("%s",region.requestno); 
-
 
             if(results.response.entity)
             {
-            var arr = new Array();
-           // session.send("%s",);
-
-
+            var arr = new Array();         
             var arr = str.match(/\(([^)]+)\)/)[1];         
             var abc;
-            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;     
+            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;   
 
             Request.get({ url : process.env.global_reqno_apiurl,headers:{"Authorization" : auth}}, (error, response, body) => {
                 if(error) {
                    session.send("Geting error");
                 }
                 else{
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         abc=JSON.parse(body); 
                         session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
                         var cards=getCardsAttachmentsForVendorName(session,abc);
                         var msg = new builder.Message(session)
                         .addAttachment(cards);
                         session.send(msg);             
-                        //end adaptive
-
-
-                       // session.send("Vendor Name : %s \n Vendor Code : %s \n Request No : %s \n Status : %s \n Approved By : %s \n PAN No : %s \n GST No : %s",bodydata[0].VENDOR_NAME,bodydata[0].VENDOR_CODE,bodydata[0].REQUEST_NO,bodydata[0].STATUS,bodydata[0].APPROVED_BY,bodydata[0].PAN_NO,bodydata[0].GST_NO +'<br>' );
                         session.endDialogWithResult(results);
                     }
             });   
@@ -559,10 +493,10 @@ bot.dialog('GSTandPAN_NoDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                 
+        UserQuestion=session.message.text;        
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+        //createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
 
         if(args.Entity==true)
         {                
@@ -644,6 +578,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                 {
                         if(abc.length == 1)
                         {
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                             session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
                             var data1=session.conversationData[GlobalRequestNo];
                             var enquryno=data1.replace('/', '_');
@@ -703,6 +638,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                 } 
                 else
                 {
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent],"None");
                     session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
@@ -716,18 +652,17 @@ bot.dialog('GSTandPAN_NoDialog',[
         if(session.conversationData[GlobalRequestNo])
         {
          var bodydata;
-         process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + session.conversationData[GlobalRequestNo];
-
-       
+         process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + session.conversationData[GlobalRequestNo];       
          Request.get({ url : process.env.global_reqno_apiurl,headers:{"Authorization" : auth}}, (error, response, body) => {
              if(error) {
                 session.send("Geting error");
              }
              else{
+               
                  bodydata=JSON.parse(body);
-
                  if(bodydata.length>0)
                  {
+                 createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                  session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
                  if(session.conversationData[Gloabalentity1]=="GstNo")   
                  {
@@ -763,6 +698,7 @@ bot.dialog('GSTandPAN_NoDialog',[
 
                 }
                 else{
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                     session.send("Information not exist for: %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
                 }
@@ -774,6 +710,7 @@ bot.dialog('GSTandPAN_NoDialog',[
         {
             //session.conversationData[GloabalIntent]="Vendor.Number";               
            // session.beginDialog('askForVendorName'); 
+           createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
            var msgfornodata = new builder.Message();    
             msgfornodata.text("It looks like you are looking for “pan no” or “gst no” but you did not mention _vendor name.\n You may ask things like “pan no for _ABC Ltd_” or “gst no for _ABC Ltd_” ");        
             session.send(msgfornodata);
@@ -800,7 +737,8 @@ bot.dialog('GSTandPAN_NoDialog',[
                         bodydata=JSON.parse(body);
                         if(bodydata.length>0)
                         {
-                        session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
+                               createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
+                               session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
                                 if(session.conversationData[Gloabalentity1]=="GstNo")
                                 {                                   
                                     session.send('Vendor Name : %s \n GST No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].GST_NO);
@@ -812,13 +750,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                                    // session.endDialogWithResult(results);
 
                                 }
-                                // else
-                                // {
-                                //     session.send('Please narrow your search');
-                                //     //session.endDialogWithResult(results);
-                                // }
-                                //get gst or pan attach document 
-                            
+                               
                             attachdoc = getattachdocument(session,bodydata);                               
                             var exte = getextention(attachdoc);
                             if(attachdoc)
@@ -840,12 +772,12 @@ bot.dialog('GSTandPAN_NoDialog',[
                         }    
                         else
                         {
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                             session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
                             session.endDialog();
                         }
                     }                        
                 });
-
                 session.endDialog();//DOES NOT WORK
                 }
                 else
@@ -860,10 +792,7 @@ bot.dialog('GSTandPAN_NoDialog',[
 //vendor extention dialog
 bot.dialog('ExtensionDialog',[
     function (session, args, next) {
-
-     
-
-       if(args.Entity==true)
+    if(args.Entity==true)
        {                
        }
        else
@@ -889,13 +818,8 @@ bot.dialog('ExtensionDialog',[
        UserName= session.conversationData.userName;
        UserId=session.conversationData.userID;
        ConversationId=session.conversationData.conversationID;
-                
-     // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
-     
-       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
-
-
-       //Get Data From Web Api
+            
+        //Get Data From Web Api
         if(session.conversationData[Gloabalentity])
         {
             //var Request = require("request");
@@ -916,22 +840,22 @@ bot.dialog('ExtensionDialog',[
                 var i,j; 
                 if(abc.length == 1)
                 {
+                   
                     session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
                     var msg = new builder.Message(session);
-                    msg.attachmentLayout(builder.AttachmentLayout.carousel);
-                   
+                    msg.attachmentLayout(builder.AttachmentLayout.carousel);                   
                     var attachments = [];
-
                         var attachments = getCardsAttachmentsForExtensionList(session,abc);
                         if(attachments.length>0)
                         {
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         msg.attachments(attachments);
                         session.send(msg);
                         session.endDialog(); 
                         }
                         else
                         {
-                            
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                             session.send("Extensions not available");
                             session.endDialog(); 
                         }
@@ -959,6 +883,7 @@ bot.dialog('ExtensionDialog',[
                 }   
             }
             else{
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                     session.send("Extensions not available for vendor : %s",session.conversationData[GlobalVendorName]);
                     session.endDialog();
             }                 
@@ -991,7 +916,7 @@ bot.dialog('ExtensionDialog',[
                         }
                         else
                         {
-                            
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                             session.send("Extensions not available");
                             session.endDialog(); 
                         }
@@ -1002,6 +927,7 @@ bot.dialog('ExtensionDialog',[
             {
             //    session.conversationData[GloabalIntent]="Vendor.Extensions";               
             //    session.beginDialog('askForVendorName');  
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 var msgfornodata = new builder.Message();    
                 msgfornodata.text("It looks like you are looking for “extensions” or “associations” but you did not mention _vendor name_.\n You may ask things like “extension for _ABC Ltd_” or “association for _ABC Ltd_” ");        
                 session.send(msgfornodata);           
@@ -1030,13 +956,14 @@ bot.dialog('ExtensionDialog',[
                     var attachments = getCardsAttachmentsForExtensionList(session,abc);
                     if(attachments.length>0)
                     {
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         msg.attachments(attachments);
                         session.send(msg);
                         session.endDialog(); 
                     }
                     else
                     {
-                        
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                         session.send("Extensions not available");
                         session.endDialog(); 
                     }
@@ -1046,7 +973,8 @@ bot.dialog('ExtensionDialog',[
     }
     else
     {
-        session.send("Extension Not Found");
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
+        session.send("Extension not available");
         session.endDialog();
     }
    
@@ -1089,9 +1017,9 @@ bot.dialog('AllDocumentDialog',[
        UserName= session.conversationData.userName;
        UserId=session.conversationData.userID;
        ConversationId=session.conversationData.conversationID;
-                
+       UserQuestion=session.message.text;         
      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
-       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+       //createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
      //end cosmos db 
        
         //Get Data From Web Api
@@ -1114,7 +1042,8 @@ bot.dialog('AllDocumentDialog',[
                 {
                 if(abc.length == 1)
                 {
-                    var message;
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
+                var message;
                 var msg = new builder.Message(session);
                 msg.attachmentLayout(builder.AttachmentLayout.carousel);
                 session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;
@@ -1170,6 +1099,7 @@ bot.dialog('AllDocumentDialog',[
                 }   
             }  
             else{
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send("Documents not available for vendor : %s",session.conversationData[GlobalVendorName]);
                 session.endDialog();
             }               
@@ -1192,7 +1122,7 @@ bot.dialog('AllDocumentDialog',[
 
                         if(bodydata.length>0)
                         {
-
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                      var message;
                      var msg = new builder.Message(session);
                      msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1225,6 +1155,7 @@ bot.dialog('AllDocumentDialog',[
                         }
                         else
                         {
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                             session.send("Documents not available for vendor : %s",session.conversationData[GlobalVendorName]);
                             session.endDialog();
                         }                   
@@ -1233,6 +1164,7 @@ bot.dialog('AllDocumentDialog',[
             }
             else 
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 var msgfornodata = new builder.Message();    
                 msgfornodata.text("It looks like you are looking for “All document” or “document” but you did not mention _vendor name_.\n You may ask things like “All documents for _ABC Ltd_” or “documents for _ABC Ltd_” ");        
                 session.send(msgfornodata);   
@@ -1265,6 +1197,7 @@ bot.dialog('AllDocumentDialog',[
               //  var card;
                   if(bodydata[0].DOCUMENT_LIST.length > 0)
                   {
+                       createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         var message;
                         var msg = new builder.Message(session);
                         msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1294,12 +1227,14 @@ bot.dialog('AllDocumentDialog',[
                   }
                     else
                     {
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                          session.send("Documents not available for vendor : %s",session.conversationData[GlobalVendorName]);
                           session.endDialog();
                     }
 
             }
             else{
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send("Documents not available for vendor : %s",session.conversationData[GlobalVendorName]);
                 session.endDialog();
             }
@@ -1331,9 +1266,9 @@ bot.dialog('MaterialDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                 
+        UserQuestion=session.message.text;         
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      //  createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
       //end cosmos db 
 
   //Get Data From Web Api
@@ -1356,18 +1291,7 @@ bot.dialog('MaterialDialog',[
 
                 if(abc.length>0)
                     {
-                      
-                        //material extension list
-
-                        // var prompt1 = new builder.Message(session);
-                        // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                        // var attachments1 = [];                   
-                        // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                        // prompt1.attachments(attachments1);
-                        // session.send("Up to top 10 Material Details are shown.");
-                        // session.send(prompt1);
-
-
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         //material details
                         var msg = new builder.Message(session);
                         msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1376,13 +1300,10 @@ bot.dialog('MaterialDialog',[
                         msg.attachments(attachments);                      
                         session.send(msg);                 
                         session.endDialog();                            
-                     // session.endDialogWithResult(result);
-
-
-                    // session.send('Material Group : %s \n Material Type : %s \n Material Status : %s \n Material Description : %s \n Request Status : %s \n Request By : %s \n Request Date : %s',abc[0].MATERIAL_GROUP,abc[0].MATERIAL_TYPE,abc[0].MATERIAL_STATUS,abc[0].MATERIAL_DESCRIPTION,abc[0].REQUEST_STATUS,abc[0].REQUEST_BY,abc[0].REQUEST_DATE);
-                    // session.endDialog();
+                    
                 }
                 else{
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                     session.send('Information not available for material code : %s',session.conversationData[GlobalMaterialCode]);
                     session.endDialog();
                 }
@@ -1408,15 +1329,7 @@ bot.dialog('MaterialDialog',[
 
                 if(abc.length>0)
                     {                    
-                        //material extension list
-                        // var prompt1 = new builder.Message(session);
-                        // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                        // var attachments1 = [];                   
-                        // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                        // prompt1.attachments(attachments1);
-                        // session.send("Up to top 10 Material Details are shown.");
-                        // session.send(prompt1);
-
+                        
                         //material details
                         var msg = new builder.Message(session);
                         msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1428,7 +1341,8 @@ bot.dialog('MaterialDialog',[
                   
                 }
                 else{
-                    session.send('Information Not Available for material Name : %s',session.conversationData[GlobalMaterialName]);
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
+                    session.send('Information not available for material Name : %s',session.conversationData[GlobalMaterialName]);
                     session.endDialog();
                 }
         }                                 
@@ -1449,16 +1363,6 @@ bot.dialog('MaterialDialog',[
             {
                 session.conversationData[GlobalMaterialCode] = abc[0].MATERIAL_NUMBER;
                     
-                    //material extension list
-                    // var prompt1 = new builder.Message(session);
-                    // prompt1.attachmentLayout(builder.AttachmentLayout.carousel);
-                    // var attachments1 = [];                   
-                    // var attachments1=getCardsAttachmentsForMaterialextension(session,abc)
-                    // prompt1.attachments(attachments1);
-                    // session.send("Up to top 10 Material Details are shown.");
-                    // session.send(prompt1);
-
-
                     //material details
                     var msg = new builder.Message(session);
                     msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1470,6 +1374,7 @@ bot.dialog('MaterialDialog',[
 
             }  
             else{
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send('Information Not Available for material code : %s',session.conversationData[GlobalMaterialCode]);
                 session.endDialog();
             } 
@@ -1480,6 +1385,7 @@ bot.dialog('MaterialDialog',[
       }
       else 
       {
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
         var msgfornodata = new builder.Message();    
         msgfornodata.text("It looks like you are looking for “Material Details” or but you did not mention _material name_ or _material code_.\n You may ask things like “material details for _GRASS CARPET_” or “material details for _200131_” ");        
         session.send(msgfornodata);   
@@ -1509,9 +1415,9 @@ bot.dialog('ServiceDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                 
+        UserQuestion=session.message.text;         
       // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+       // createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
       //end cosmos db 
 
 
@@ -1534,6 +1440,7 @@ bot.dialog('ServiceDialog',[
             var i,j; 
             if(abc.length > 0)
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
               // session.conversationData[GlobalServiceCode] = abc[0].SERVICE_NUMBER;      
               var msg = new builder.Message(session);
               msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1546,6 +1453,7 @@ bot.dialog('ServiceDialog',[
            }
             else
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send('Data not available for service code : %s',session.conversationData[GlobalServiceCode]);
                 session.endDialog();
             }
@@ -1570,6 +1478,7 @@ bot.dialog('ServiceDialog',[
             var i,j; 
             if(abc.length > 0)
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
               // session.conversationData[GlobalServiceCode] = abc[0].SERVICE_NUMBER;      
               var msg = new builder.Message(session);
               msg.attachmentLayout(builder.AttachmentLayout.carousel);
@@ -1582,6 +1491,7 @@ bot.dialog('ServiceDialog',[
            }
             else
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send('Data not available for service Name : %s',session.conversationData[GlobalServiceName]);
                 session.endDialog();
             }
@@ -1601,6 +1511,7 @@ bot.dialog('ServiceDialog',[
             var i,j; 
             if(abc.length>0)
             {
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
               // session.conversationData[GlobalServiceCode] = abc[0].SERVICE_NUMBER;           
                session.conversationData[GlobalServiceCode] = abc[0].SERVICE_NUMBER;      
                var msg = new builder.Message(session);
@@ -1615,6 +1526,7 @@ bot.dialog('ServiceDialog',[
             
             }
             else{
+                createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                 session.send('Data not available for service code : %s',session.conversationData[GlobalServiceCode]);
                 session.endDialog();
             }
@@ -1624,13 +1536,13 @@ bot.dialog('ServiceDialog',[
       }
       else 
       {
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
         var msgfornodata = new builder.Message();    
         msgfornodata.text("It looks like you are looking for “Service Details” or but you did not mention _service name_ or _service code_.\n You may ask things like “service details for _Fuel Charges_” or “service details for _3001655_” ");        
         session.send(msgfornodata);   
         // session.send("It looks like you are looking for vendor details but you didn't mention vendor name. You may ask things like All document for ABC Ltd");           
-        session.endDialog(); 
-        
-        //session.beginDialog('askMoreAttributeForService');  
+        session.endDialog();      
+       
       }
     }
 
@@ -1652,9 +1564,9 @@ bot.dialog('RequestDetailsDialog',[
         UserName= session.conversationData.userName;
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
-                
+        UserQuestion=session.message.text;       
         // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
-        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
+      //  createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
         //end cosmos db 
 
 
@@ -1700,7 +1612,7 @@ bot.dialog('RequestDetailsDialog',[
                                 var i,j; 
                                 if(abc.length>0)
                                 {
-                                   
+                                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                                     var msg = new builder.Message(session);
                                     msg.attachmentLayout(builder.AttachmentLayout.carousel);
                                     var attachments = [];                                      
@@ -1717,6 +1629,7 @@ bot.dialog('RequestDetailsDialog',[
                                 }
                                 else
                                 {
+                                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,"None");
                                     session.send("No one request pending for %s  ",session.conversationData[GlobalADID]); 
                                     session.endDialog();
                                 }
@@ -1735,7 +1648,8 @@ bot.dialog('RequestDetailsDialog',[
                     abc=JSON.parse(body);
                     var i,j; 
                     if(abc.length > 0)
-                    {                   
+                    {      
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);             
                         var msg = new builder.Message(session);
                          msg.attachmentLayout(builder.AttachmentLayout.carousel);
                          var attachments = [];                                      
@@ -1749,6 +1663,7 @@ bot.dialog('RequestDetailsDialog',[
                     }
                 else
                 {
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                     session.send("Request details not found for: %s  ",session.conversationData[GlobalADID]); 
                 }
                 }                                 
@@ -1781,6 +1696,7 @@ bot.dialog('RequestDetailsDialog',[
                     var attachments = [];
                       if(abc.length>0)
                       {   
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                         var msg = new builder.Message(session);
                                     msg.attachmentLayout(builder.AttachmentLayout.carousel);
                                     var attachments = [];                                      
@@ -1792,6 +1708,7 @@ bot.dialog('RequestDetailsDialog',[
 
                         }
                         else{
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                             session.send("No one request pending for: %s  ",session.conversationData[GlobalADID]);
                             session.endDialog(); 
                         }
@@ -1810,6 +1727,7 @@ bot.dialog('RequestDetailsDialog',[
                 var i,j; 
                 if(abc.length>0)
                 {
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                     var msg = new builder.Message(session);
                     msg.attachmentLayout(builder.AttachmentLayout.carousel);
                     var attachments = [];                                      
@@ -1821,6 +1739,7 @@ bot.dialog('RequestDetailsDialog',[
                 }
                 else
                 {
+                    createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
                     session.send("Request details not found for: %s  ",session.conversationData[GlobalADID]);
                     session.endDialog(); 
                 }
@@ -1844,6 +1763,7 @@ bot.dialog('RequestDetailsDialog',[
       }
       else 
       {
+        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
         session.send("Please narrow your search.");
         session.endDialog();
       }
