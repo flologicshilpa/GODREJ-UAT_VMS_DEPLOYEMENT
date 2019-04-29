@@ -1422,9 +1422,9 @@ bot.dialog('ServiceDialog',[
 
 
   //Get Data From Web Api
-    if(builder.EntityRecognizer.findEntity(intent.entities,'ServiceCode'))
+    if(builder.EntityRecognizer.findEntity(intent.entities,'Code'))
     {      
-        entity = builder.EntityRecognizer.findEntity(intent.entities,'ServiceCode');
+        entity = builder.EntityRecognizer.findEntity(intent.entities,'Code');
         session.conversationData[Gloabalentity]=entity;
 
         session.conversationData[GlobalServiceCode] = entity.entity;         
