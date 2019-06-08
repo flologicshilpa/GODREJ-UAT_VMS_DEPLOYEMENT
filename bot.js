@@ -2899,6 +2899,29 @@ function getCardsAttachmentsForServiceDetails(session,abc)
                                 "items": [
                                         {
                                             'type': 'TextBlock',
+                                            'text': 'Request Number:',
+                                            'weight': 'bolder',
+                                        }]
+                            },
+                            {
+                                "type": "Column",
+                                "width":6,
+                                "items": [
+                                        {
+                                                    'type': 'TextBlock',
+                                                    'text': abc[i].REQUEST_NO,
+                                        }]
+                            }]
+                        },
+                        {
+                        "type": "ColumnSet",
+                        "columns": [
+                            {
+                                "type": "Column",
+                                "width": 4,
+                                "items": [
+                                        {
+                                            'type': 'TextBlock',
                                             'text': 'Service Description:',
                                             'weight': 'bolder',
                                         }]
