@@ -2922,7 +2922,7 @@ function getCardsAttachmentsForServiceDetails(session,abc)
                                     "items": [
                                             {
                                                 'type': 'TextBlock',
-                                                'text': 'Service Status:',
+                                                'text': 'Valuation Class:',
                                                 'weight': 'bolder',
                                             }]
                                 },
@@ -2932,7 +2932,7 @@ function getCardsAttachmentsForServiceDetails(session,abc)
                                     "items": [
                                             {
                                                         'type': 'TextBlock',
-                                                        'text': abc[i].SERVICEL_STATUS,
+                                                        'text': abc[i].VALUATION_CLASS,
                                             }]
                                 }]
                         },
