@@ -259,10 +259,7 @@ bot.dialog('NoneDialog',[
     matches: 'None'
 })
 
-var salesData={};
-var str1 = "";
-var str2 = "";
-var str3="";
+
 //Vendor all details Dialog
 bot.dialog('AllDetailsDialog',[
     function (session, args, next) {
@@ -300,12 +297,7 @@ bot.dialog('AllDetailsDialog',[
         UserId=session.conversationData.userID;
         ConversationId=session.conversationData.conversationID;
         UserQuestion=session.message.text;   
-      // session.send("botid=%s botName=%s UserName=%s UserId=%s ConversationId=%s Date=%s DateTime=%s",BotID,BotName,UserName,UserId,ConversationId,date,datetime);
       
-      //  createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,session.message.text,session.conversationData[GloabalIntent]);
-      
-
-
         if(session.conversationData[Gloabalentity])
         {
             panentity = builder.EntityRecognizer.findEntity(intent.entities,'pan-code');
@@ -337,12 +329,13 @@ bot.dialog('AllDetailsDialog',[
                         {
                         
                         createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);    
-                        session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
-                        var cards = getCardsAttachmentsForVendorName(session,abc);
+                       
                         var msg = new builder.Message(session)
-                        .addAttachment(cards);
-                        session.send(msg);   
-                        session.conversationData[GlobalPanGSTCode]="";          
+                        var attachments = [];                            
+                        msg.attachmentLayout(builder.AttachmentLayout.carousel);
+                        var attachments=getCardsAttachmentsForVendorName(session,abc);
+                        msg.attachments(attachments);                      
+                        session.send(msg);                 
                         session.endDialog();
                         }
                         else{
@@ -370,36 +363,18 @@ bot.dialog('AllDetailsDialog',[
                         
                         abc=JSON.parse(body);
                         //for single record
-                        if(abc.length == 1)
+                        if(abc.length >= 1)
                         {
-                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
-                        session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
-                        var cards=getCardsAttachmentsForVendorName(session,abc);
-                        var msg = new builder.Message(session)
-                        .addAttachment(cards);
-                        session.send(msg);             
-                        session.endDialog();
+                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
+                          //  session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;                     
+                           var msg = new builder.Message(session)
+                            var attachments = [];                            
+                            msg.attachmentLayout(builder.AttachmentLayout.carousel);
+                            var attachments=getCardsAttachmentsForVendorName(session,abc);
+                            msg.attachments(attachments);                      
+                            session.send(msg);                 
+                            session.endDialog(); 
                         }
-                        //for more than one record found
-                        else if(abc.length > 1) 
-                        {  
-                            for (i = 0; i < abc.length; i++) 
-                            {
-                                if(i <= 4)
-                                { dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")"); }
-
-                            }
-                            if(abc.length > 4)
-                            {
-                                session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
-                                builder.Prompts.choice(session, "Select Name",dict,{listStyle:3});
-                            }
-                            else
-                            {
-                                    builder.Prompts.choice(session, "Select Name: ",dict,{listStyle:3});
-                            }
-                        } 
-                        //no record found  
                         else
                         {
                             createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
@@ -420,8 +395,7 @@ bot.dialog('AllDetailsDialog',[
                 if(error) {
                    session.send("Geting error");
                 }
-                else{
-                
+                else{                
                  createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
                  abc=JSON.parse(body);                                   
                  session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;   
@@ -445,48 +419,15 @@ bot.dialog('AllDetailsDialog',[
            }
         
         } 
-    },
-    //Get Data for selected name
-      function (session, results) {          
-      var str=results.response.entity;
-
-            if(results.response.entity)
-            {
-            var arr = new Array();         
-            var arr = str.match(/\(([^)]+)\)/)[1];         
-            var abc;
-            process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;   
-
-            Request.get({ url : process.env.global_reqno_apiurl,headers:{"Authorization" : auth}}, (error, response, body) => {
-                if(error) {
-                   session.send("Geting error");
-                }
-                else{
-                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
-                        abc=JSON.parse(body); 
-                        session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
-                        var cards=getCardsAttachmentsForVendorName(session,abc);
-                        var msg = new builder.Message(session)
-                        .addAttachment(cards);
-                        session.send(msg);             
-                        session.endDialogWithResult(results);
-                    }
-            });   
-            session.endDialog();
-        }
-        else
-        {     
-        session.endDialog();
-        }
     }
 ]).triggerAction({
     matches: 'Vendor.AllDetails'
 })
 
 //Vendor Pan and Gst No
+//Vendor Pan and Gst No
 bot.dialog('GSTandPAN_NoDialog',[
     function (session, args, next) {
-
       
         BotID=session.conversationData.botID;
         BotName=session.conversationData.botName;
@@ -513,11 +454,7 @@ bot.dialog('GSTandPAN_NoDialog',[
                 else if(builder.EntityRecognizer.findEntity(intent.entities,'PanNo'))
                 {
                     session.conversationData[Gloabalentity1] ="PanNo";
-                }
-                // else if(builder.EntityRecognizer.findEntity(intent.entities,'CST_Certificate'))
-                // {
-                //     session.conversationData[Gloabalentity1] ="CST_Certificate";
-                // }
+                }             
                 else if(builder.EntityRecognizer.findEntity(intent.entities,'Cancelled_Cheque'))
                 {
                     session.conversationData[Gloabalentity1] ="Cancelled_Cheque";
@@ -576,65 +513,16 @@ bot.dialog('GSTandPAN_NoDialog',[
                
                 if(abc.length>0)
                 {
-                        if(abc.length == 1)
-                        {
-                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
-                            session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;  
-                            var data1=session.conversationData[GlobalRequestNo];
-                            var enquryno=data1.replace('/', '_');
-                            var finaleqno=enquryno.replace('/','_');                           
-                           
-                            if(session.conversationData[Gloabalentity1]=="GstNo")
-                            {
-                                
-                                session.send('Vendor Name : %s \n GST No : %s ',abc[0].VENDOR_NAME,abc[0].GST_NO +'<br>' );
-                                //session.endDialog();  
-                            }
-                            else(session.conversationData[Gloabalentity1]=="PanNo")
-                            {                                
-                                session.send('Vendor Name : %s \n Pan No : %s ',abc[0].VENDOR_NAME,abc[0].PAN_NO +'<br>' );
-                               // session.endDialog(); 
-                            }
-                           
-                             //get gst or pan attach document 
-                            
-                             attachdoc = getattachdocument(session,abc);                               
-                             var exte = getextention(attachdoc);
-                             if(attachdoc)
-                             {
-                             var msg = session.message;                               
-                              var attachment = msg.attachments[0];                                 
-                                 session.send({text: "Attach Document:",
-                                     attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"
-                                         }
-                                     ]
-                                 });
-                                 session.endDialog();
-                             }
-                             else{
-                                 session.send("Document not attached");
-                                 session.endDialog();
-                             }
-                        }
-                        else
-                        {
-                            for (i = 0; i < abc.length; i++) 
-                            {
-                                if(i <= 4)
-                                {
-                                  // dict.push("Name:" + abc[i].VENDOR_NAME + " Request No:"+ abc[i].REQUEST_NO)
-                                  dict.push(abc[i].VENDOR_NAME +" ("+ abc[i].REQUEST_NO +")")
-                                }
-                            }
-                            if(abc.length > 4)
-                            {
-                                   session.send("More than 5 rows returned. Please narrow your search and resubmit your query.");
-                                    builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
-                            }
-                            else{
-                                builder.Prompts.choice(session, "Select Name: ", dict,{listStyle:3});
-                            }
-                        }
+                        createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);    
+                      
+                                         
+                        var msg = new builder.Message(session)
+                        var attachments = [];                            
+                        msg.attachmentLayout(builder.AttachmentLayout.carousel);
+                        var attachments=getCardsAttachmentsForPANGSTNo(session,abc);
+                        msg.attachments(attachments);                      
+                        session.send(msg);  
+                        session.endDialog();             
                 } 
                 else
                 {
@@ -718,73 +606,7 @@ bot.dialog('GSTandPAN_NoDialog',[
            session.endDialog();  
         }      
     }
-},   
-    function (session, results) {
-                var str = results.response.entity;
-                if(results.response.entity)
-                {
-             
-                var arr = str.match(/\(([^)]+)\)/)[1];   
-                var bodydata;
-                var attachdoc;
-                process.env.global_reqno_apiurl = process.env.ApiURLForRequestNumber + arr;
-               
-                Request.get({ url : process.env.global_reqno_apiurl,headers:{"Authorization" : auth}}, (error, response, body) => {
-                    if(error) {
-                    session.send("Geting error");
-                    }
-                    else{
-                        bodydata=JSON.parse(body);
-                        if(bodydata.length>0)
-                        {
-                               createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,session.conversationData[GloabalIntent]);
-                               session.conversationData[GlobalRequestNo] = bodydata[0].REQUEST_NO;
-                                if(session.conversationData[Gloabalentity1]=="GstNo")
-                                {                                   
-                                    session.send('Vendor Name : %s \n GST No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].GST_NO);
-                                    //session.endDialogWithResult(results);
-                                }
-                                else if(session.conversationData[Gloabalentity1]=="PanNo")
-                                {                         
-                                    session.send('Vendor Name : %s \n PAN No : %s ',bodydata[0].VENDOR_NAME,bodydata[0].PAN_NO);
-                                   // session.endDialogWithResult(results);
-
-                                }
-                               
-                            attachdoc = getattachdocument(session,bodydata);                               
-                            var exte = getextention(attachdoc);
-                            if(attachdoc)
-                            {
-                            var msg = session.message;                               
-                            var attachment = msg.attachments[0];                                 
-                                session.send({text: "Attach Document:",
-                                    attachments: [{contentType: "application/" + exte,contentUrl: attachdoc,name: "click here to open file"
-                                        }
-                                    ]
-                                });
-                                session.endDialogWithResult(results); 
-                            }
-                            else{
-                                session.send("Document not attached");
-                                session.endDialog(); 
-                            }
-
-                        }    
-                        else
-                        {
-                            createFamilyItem(BotID,BotName,ConversationId,UserId,UserName,UserQuestion,"None");
-                            session.send("Information not exist for : %s",session.conversationData[GlobalVendorName]);
-                            session.endDialog();
-                        }
-                    }                        
-                });
-                session.endDialog();//DOES NOT WORK
-                }
-                else
-                {
-                    session.endDialog();
-                }
-            }
+}    
 ]).triggerAction({
     matches: 'Vendor.Number'
 })
@@ -2213,23 +2035,100 @@ bot.dialog('askForPendingorDetailsRequest', [
 ])
 
 
-
 //adaptive card for vendor details
-function getCardsAttachmentsForVendorName(session,abc) {
+function getCardsAttachmentsForPANGSTNo(session,abc) {
 
-    var statusimage = getstatusURL(session,abc);
+    var Numberpanorgst,namepangst;
+    var docname;
+    //get attach document
     
-    var card = {
-            'contentType': 'application/vnd.microsoft.card.adaptive',
-            'content': {
-                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                "type": "AdaptiveCard",
-                "version": "1.0",
-                "body": [                    
-                    {
-                        "type": "Container",
-                        "items": [
-                            {
+
+    
+    var attachments=[];
+    for(i=0; i<abc.length; i++)
+    {
+        var attachdoc = getattachdocument(session,abc[i]);                               
+        var exte = getextention(attachdoc);
+        if(attachdoc)
+        {
+                docname = attachdoc;     
+        }
+        else{
+                docname = "Document not attached";        
+        }  
+
+        if(session.conversationData[Gloabalentity1]=="PanNo")
+         {
+            namepangst="PAN No";
+            Numberpanorgst=abc[i].PAN_NO;
+                           
+        }
+        else if(session.conversationData[Gloabalentity1]=="GstNo")
+         {
+            namepangst = "GST No";
+            Numberpanorgst = abc[i].GST_NO;
+        }
+        else
+         {
+            namepangst="";
+            Numberpanorgst="";
+        }
+        var statusimage = getstatusURL(session,abc[i].STATUS);
+           
+        var card = {
+                'contentType': 'application/vnd.microsoft.card.adaptive',
+                'content': {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.0",
+                    "body": [                    
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                    "type": "ColumnSet",
+                                    "columns": [
+                                        {
+                                            "type": "Column",
+                                            "items": [
+                                                {
+                                                    "type": "TextBlock",
+                                                    "size": "Medium",
+                                                    "weight": "Bolder",
+                                                    "text": abc[i].VENDOR_NAME,
+                                                    "wrap": true
+                                                },
+                                                {
+                                                    "type": "TextBlock",
+                                                    "spacing": "None",
+                                                    "text": abc[i].VENDOR_CODE,
+                                                    "isSubtle": true,
+                                                    "wrap": true
+                                                }
+                                            ],
+                                            "width": "stretch"
+                                        },
+                                        {
+                                            "type": "Column",
+                                            "items": [
+                                                {
+                                                    "type": "Image",
+                                                    "style": "Person",
+                                                    "url":statusimage,
+                                                    "size": "small"
+                                                }
+                                            ],
+                                            "width": "auto"
+                                        },
+
+                                    ] }
+                                ]
+                        },
+                        {
+                            "type": "Container",
+                            "separator": true,
+                            "items": [
+                                {
                                 "type": "ColumnSet",
                                 "columns": [
                                     {
@@ -2239,242 +2138,343 @@ function getCardsAttachmentsForVendorName(session,abc) {
                                                 "type": "TextBlock",
                                                 "size": "Medium",
                                                 "weight": "Bolder",
-                                                "text": abc[0].VENDOR_NAME,
-                                                "wrap": true
+                                                "text":namepangst,
+                                                
                                             },
-                                            {
-                                                "type": "TextBlock",
-                                                "spacing": "None",
-                                                "text": abc[0].VENDOR_CODE,
-                                                "isSubtle": true,
-                                                "wrap": true
-                                            }
+                                        
                                         ],
-                                        "width": "stretch"
+                                        "width": 3
                                     },
                                     {
                                         "type": "Column",
                                         "items": [
                                             {
-                                                "type": "Image",
-                                                "style": "Person",
-                                                "url":statusimage,
-                                                "size": "small"
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                           
+                                                "text": Numberpanorgst,
+                                            
                                             }
                                         ],
-                                        "width": "auto"
+                                        "width": 7
+                                    }
+                                ] }
+                            ]
+                        }                       
+                    ],//body close
+                    "actions": [
+                        {
+                          "type": "Action.OpenUrl",
+                          "title": "Open Document",
+                          "url":docname
+                        }
+                      ]
+                    }//content
+        };
+        attachments.push(card);      
+    }
+    return attachments;
+}
+
+
+//adaptive card for vendor details
+
+function getCardsAttachmentsForVendorName(session,abc) {
+
+    var attachments=[];
+    for(i=0; i<abc.length; i++)
+    {
+        var statusimage = getstatusURL(session,abc[i].STATUS);
+    
+       
+        var card = {
+                'contentType': 'application/vnd.microsoft.card.adaptive',
+                'content': {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    "type": "AdaptiveCard",
+                    "version": "1.0",
+                    "body": [                    
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                    "type": "ColumnSet",
+                                    "columns": [
+                                        {
+                                            "type": "Column",
+                                            "items": [
+                                                {
+                                                    "type": "TextBlock",
+                                                    "size": "Medium",
+                                                    "weight": "Bolder",
+                                                    "text": abc[i].VENDOR_NAME,
+                                                    "wrap": true
+                                                },
+                                                {
+                                                    "type": "TextBlock",
+                                                    "spacing": "None",
+                                                    "text": abc[i].VENDOR_CODE,
+                                                    "isSubtle": true,
+                                                    "wrap": true
+                                                }
+                                            ],
+                                            "width": "stretch"
+                                        },
+                                        {
+                                            "type": "Column",
+                                            "items": [
+                                                {
+                                                    "type": "Image",
+                                                    "style": "Person",
+                                                    "url":statusimage,
+                                                    "size": "small"
+                                                }
+                                            ],
+                                            "width": "auto"
+                                        },
+
+                                    ] }
+                                ]
+                        },
+                        {
+                            "type": "Container",
+                            "separator": true,
+                            "items": [
+                                {
+                                "type": "ColumnSet",
+                                "columns": [
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "PAN:",
+                                                
+                                            },
+                                        
+                                        ],
+                                        "width": 1
                                     },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                           
+                                                "text": abc[i].PAN_NO,
+                                            
+                                            }
+                                        ],
+                                        "width": 3
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "GST:",
+                                            
+                                            },
+                                        
+                                        ],
+                                        "width": 1
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                            
+                                                "text": abc[i].GST_NO,
+                                            
+                                            }
+                                        ],
+                                        "width": 4
+                                    },
+
+
 
                                 ] }
                             ]
-                    },
-                    {
-                        "type": "Container",
-                        "separator": true,
-                        "items": [
-                            {
-                            "type": "ColumnSet",
-                            "columns": [
+
+                        },
+                        {
+                            "type": "Container",
+                            "items": [
                                 {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",
-                                            "weight": "Bolder",
-                                            "text": "PAN:",
+                                "type": "ColumnSet",
+                                "columns": [
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "Status",
+                                                
+                                            },
+                                        
+                                        ],
+                                        "width": 2
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                           
+                                                "text": abc[i].STATUS,
                                             
-                                        },
-                                       
-                                    ],
-                                    "width": 1
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",                                           
-                                            "text": abc[0].PAN_NO,
-                                           
-                                        }
-                                    ],
-                                    "width": 3
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",
-                                            "weight": "Bolder",
-                                            "text": "GST:",
-                                           
-                                        },
-                                       
-                                    ],
-                                    "width": 1
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",                                            
-                                            "text": abc[0].GST_NO,
-                                          
-                                        }
-                                    ],
-                                    "width": 4
-                                },
+                                            }
+                                        ],
+                                        "width": 2
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "By:",
+                                            
+                                            },
+                                        
+                                        ],
+                                        "width": 1
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                            
+                                                "text": abc[i].APPROVED_BY,
+                                            
+                                            }
+                                        ],
+                                        "width": 4
+                                    },
 
 
 
+                                ] }
+                            ]
+
+                        },
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                "type": "ColumnSet",
+                                "columns": [
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "Country",
+                                                
+                                            },
+                                        
+                                        ],
+                                        "width": 2
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                           
+                                                "text": abc[i].COUNTRY_NAME,
+                                            
+                                            }
+                                        ],
+                                        "width": 2
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "City:",
+                                            
+                                            },
+                                        
+                                        ],
+                                        "width": 1
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                            
+                                                "text": "Pune",
+                                            
+                                            }
+                                        ],
+                                        "width": 4
+                                    },
+
+
+
+                                ] }
+                            ]
+
+                        },
+                        {
+                            "type": "Container",
+                            "items": [
+                                {
+                                "type": "ColumnSet",
+                                "columns": [
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",
+                                                "weight": "Bolder",
+                                                "text": "Request Number:",
+                                                
+                                            },
+                                        
+                                        ],
+                                        "width": "auto"
+                                    },
+                                    {
+                                        "type": "Column",
+                                        "items": [
+                                            {
+                                                "type": "TextBlock",
+                                                "size": "Medium",                                           
+                                                "text": abc[i].REQUEST_NO,
+                                            
+                                            }
+                                        ],
+                                        "width": "auto"
+                                    }
                             ] }
-                        ]
+                            ]
 
-                    },
-                    {
-                        "type": "Container",
-                        "items": [
-                            {
-                            "type": "ColumnSet",
-                            "columns": [
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",
-                                            "weight": "Bolder",
-                                            "text": "Status:",
-                                            
-                                        },
-                                       
-                                    ],
-                                    "width": 2
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",                                           
-                                            "text": abc[0].STATUS,
-                                           
-                                        }
-                                    ],
-                                    "width": 3
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",
-                                            "weight": "Bolder",
-                                            "text": "By:",
-                                           
-                                        },
-                                       
-                                    ],
-                                    "width": 2
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",                                            
-                                            "text": abc[0].APPROVED_BY,
-                                          
-                                        }
-                                    ],
-                                    "width": 3
-                                },
-
-
-
-                            ] }
-                        ]
-
-                    },
-                    {
-                        "type": "Container",
-                        "items": [
-                            {
-                            "type": "ColumnSet",
-                            "columns": [
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",
-                                            "weight": "Bolder",
-                                            "text": "Request Number:",
-                                            
-                                        },
-                                       
-                                    ],
-                                    "width": "auto"
-                                },
-                                {
-                                    "type": "Column",
-                                    "items": [
-                                        {
-                                            "type": "TextBlock",
-                                            "size": "Medium",                                           
-                                            "text": abc[0].REQUEST_NO,
-                                           
-                                        }
-                                    ],
-                                    "width": "auto"
-                                }
-                          ] }
-                        ]
-
-                    }
-                            // {
-                            //     "type": "FactSet",
-                            //     "facts": [
-                            //         {
-                            //             "title": "Vendor Name:",
-                            //             "value": abc[0].VENDOR_NAME
-                            //         },
-                            //         {
-                            //             "title": "Vendor Code:",
-                            //             "value": abc[0].VENDOR_CODE
-                            //         },
-                            //         {
-                            //             "title": "Request No:",
-                            //             "value": abc[0].REQUEST_NO
-                            //         },
-                            //         {
-                            //             "title": "Status:",
-                            //             "value": abc[0].STATUS
-                            //         },
-                            //         {
-                            //             "title": "Approved By:",
-                            //             "value": abc[0].APPROVED_BY
-                            //         },
-                            //         {
-                            //             "title": "PAN No:",
-                            //             "value": abc[0].PAN_NO
-                            //         },
-                            //         {
-                            //             "title": "GST No:",
-                            //             "value": abc[0].GST_NO
-                            //         },
-                            //     ]
-                            // }
-                       
+                        }
                               
-                   ]//body close
-                }//content
-            };
-       return card;
+                    ]//body close
+                    }//content
+                };
+                attachments.push(card);      
     }
+    return attachments;
+} 
     
 //adaptive card for ExtensionList
 function getCardsAttachmentsForExtensionList(session,abc)
