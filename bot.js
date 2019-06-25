@@ -1657,73 +1657,54 @@ function getattachdocument(session,abc)
     var i;
     var filename;
     var fileopen;
-    session.conversationData[GlobalRequestNo] = abc[0].REQUEST_NO;
+  
+    session.conversationData[GlobalRequestNo] = abc.REQUEST_NO;
     var data1=session.conversationData[GlobalRequestNo];
+    
     var enquryno=data1.replace('/', '_');
     var finaleqno=enquryno.replace('/','_');
 
-    for(i=0; i < abc[0].DOCUMENT_LIST.length;i++)
+    for(i=0; i < abc.DOCUMENT_LIST.length;i++)
     {
-        if(abc[0].DOCUMENT_LIST[i].FILE_TYPE =="PAN Card Copy" && session.conversationData[Gloabalentity1]=="PanNo")
+        if(abc.DOCUMENT_LIST[i].FILE_TYPE =="PAN Card Copy" && session.conversationData[Gloabalentity1]=="PanNo")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';
         }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="GST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="GstNo")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="GST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="GstNo")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="VAT Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="VAT_Certificate")
-        // {
-        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
-        // }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="EM Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="EM_Certificate")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="EM Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="EM_Certificate")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="CST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="CST_Certificate")
-        // {
-        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
-        // }
-        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Company Registration Certificate" && session.conversationData[Gloabalentity1]=="Company_Registration")
-        // {
-        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
-        // }
-        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="IOM/Approval Copy For Procurement" && session.conversationData[Gloabalentity1]=="IOM/Approval")
-        // {
-        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
-        // }
-        // else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="ST Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="ST_Certificate")
-        // {
-        //     attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
-        // }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="PF Certificate/ Undertaking" && session.conversationData[Gloabalentity1]=="PF_Certificate")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="PF Certificate/ Undertaking" && session.conversationData[Gloabalentity1]=="PF_Certificate")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }       
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Proprietorship Declaration" && session.conversationData[Gloabalentity1]=="Proprietorship_Declaration")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="Proprietorship Declaration" && session.conversationData[Gloabalentity1]=="Proprietorship_Declaration")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Cancelled Cheque Copy" && session.conversationData[Gloabalentity1]=="Cancelled_Cheque")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="Cancelled Cheque Copy" && session.conversationData[Gloabalentity1]=="Cancelled_Cheque")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Invoice" && session.conversationData[Gloabalentity1]=="Invoice")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="Invoice" && session.conversationData[Gloabalentity1]=="Invoice")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="RERA Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="RERA_Certificate")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="RERA Certificate/ Declaration" && session.conversationData[Gloabalentity1]=="RERA_Certificate")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
-        else if(abc[0].DOCUMENT_LIST[i].FILE_TYPE=="Channel Partner Agreement " && session.conversationData[Gloabalentity1]=="Channel_Partner_Agreement")
+        else if(abc.DOCUMENT_LIST[i].FILE_TYPE=="Channel Partner Agreement " && session.conversationData[Gloabalentity1]=="Channel_Partner_Agreement")
         {
-            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc[0].DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
+            attachdocpath ='https://vrm.godrejproperties.com:20080/UAT_VRM/Common/FileDownload.aspx?enquiryno='+finaleqno+'&filename='+abc.DOCUMENT_LIST[i].FILE_NAME+'&filetag=';;
         }
     }
     return attachdocpath;
 }
-
 //extra questions
 //ask for vendor name in vendor details
 bot.dialog('askForVendorName', [
